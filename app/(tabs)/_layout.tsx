@@ -1,9 +1,11 @@
-import MyColors from "@/components/atoms/my-colors";
-import { Tabs } from "expo-router";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { TouchableOpacity } from "react-native";
+import MyColors from "@/components/atoms/my-colors"
+import { useRouter, Tabs } from "expo-router"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
+import { TouchableOpacity } from "react-native"
 
 export default function TabsLayout() {
+  const router = useRouter()
+
   return (
     <Tabs
       screenOptions={{
@@ -37,7 +39,11 @@ export default function TabsLayout() {
           ),
           headerShown: true,
           headerRight: () => (
-            <TouchableOpacity onPress={() => {}}>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("../settings-nav")
+              }}
+            >
               <Feather
                 name="settings"
                 size={24}
@@ -83,7 +89,11 @@ export default function TabsLayout() {
           ),
           headerShown: true,
           headerRight: () => (
-            <TouchableOpacity onPress={() => {}}>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("../settings-nav")
+              }}
+            >
               <Feather
                 name="settings"
                 size={24}
@@ -95,5 +105,5 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
-  );
+  )
 }

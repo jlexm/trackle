@@ -3,6 +3,7 @@ import { View, StyleSheet, Text } from "react-native";
 import { Camera, CameraView } from "expo-camera";
 import MyColors from "../atoms/my-colors";
 import MyButton from "../atoms/my-button";
+import MyText from "../atoms/my-text";
 
 export default function ScanScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -41,6 +42,9 @@ export default function ScanScreen() {
       >
         {/* Scanner Overlay */}
         <View style={styles.overlay}>
+          <MyText textType="title" textColor={MyColors.white}>
+            Scan a turtle QR
+          </MyText>
           <View style={styles.scannerFrame}>
             <View style={[styles.corner, styles.topLeft]} />
             <View style={[styles.corner, styles.topRight]} />
@@ -82,6 +86,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scannerFrame: {
+    marginTop: 20,
     width: 250,
     height: 250,
   },

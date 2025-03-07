@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
   View,
   StyleSheet,
@@ -7,19 +7,23 @@ import {
   Dimensions,
   SafeAreaView,
   ScrollView,
-} from "react-native";
-import { ActivityIndicator, Card, TouchableRipple } from "react-native-paper";
-import MyColors from "../atoms/my-colors";
-import MyText from "../atoms/my-text";
-import { Feather } from "@expo/vector-icons";
-import PagerView from "react-native-pager-view";
-import { router } from "expo-router";
+} from "react-native"
+import { ActivityIndicator, Card, TouchableRipple } from "react-native-paper"
+import MyColors from "../atoms/my-colors"
+import MyText from "../atoms/my-text"
+import { Feather } from "@expo/vector-icons"
+import PagerView from "react-native-pager-view"
+import { router } from "expo-router"
+import { useAuth } from "../auth/auth-context"
 
 export default function Homescreen() {
-  const { width } = useMemo(() => Dimensions.get("window"), []);
-  const pagerRef = useRef<PagerView>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth()
+  const username = user?.email ? user.email.split("@")[0] : "Guest"
+
+  const { width } = useMemo(() => Dimensions.get("window"), [])
+  const pagerRef = useRef<PagerView>(null)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
 
   const images = [
     "https://files.worldwildlife.org/wwfcmsprod/images/Marine_Turtle/story_full_width/t7tho497w_SeaTurtle_1600x600px.jpg",
@@ -27,20 +31,20 @@ export default function Homescreen() {
     "https://files.worldwildlife.org/wwfcmsprod/images/SCR_289416.jpg/story_full_width/8x943jdagl_SCR_289416.jpg",
     "https://www.2fla.com/sites/default/files/loggerhead-001-adolfo-felix-BXN16VVFEio-unsplash.jpg",
     "https://www.boem.gov/sites/default/files/styles/max_width_600px/public/images/leatherback_turtle_photo_credit_noaa_fisheries.jpg?itok=i7yPTVpw",
-  ].map((uri, index) => ({ id: String(index + 1), uri }));
+  ].map((uri, index) => ({ id: String(index + 1), uri }))
 
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), 2000);
+    setTimeout(() => setIsLoading(false), 2000)
     const interval = setInterval(() => {
       setCurrentPage((prevPage) => {
-        const nextPage = (prevPage + 1) % images.length;
-        pagerRef.current?.setPage(nextPage);
-        return nextPage;
-      });
-    }, 3000);
+        const nextPage = (prevPage + 1) % images.length
+        pagerRef.current?.setPage(nextPage)
+        return nextPage
+      })
+    }, 3000)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
   const turtleTypes = [
     {
@@ -68,7 +72,7 @@ export default function Homescreen() {
       image:
         "https://www.2fla.com/sites/default/files/loggerhead-001-adolfo-felix-BXN16VVFEio-unsplash.jpg",
     },
-  ];
+  ]
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -82,6 +86,15 @@ export default function Homescreen() {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.greetingContainer}>
+            <MyText textType="title" textColor={MyColors.black}>
+              Hi,{" "}
+              <MyText textType="title" textColor={MyColors.green}>
+                {username}
+              </MyText>
+            </MyText>
+          </View>
+
           <View style={styles.header}>
             <MyText
               textType="subtitle"
@@ -200,7 +213,7 @@ export default function Homescreen() {
         </ScrollView>
       )}
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -307,4 +320,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-});
+  greetingContainer: {
+    alignSelf: "stretch",
+    marginBottom: 40,
+  },
+})
