@@ -25,7 +25,13 @@ export default function RootLayout() {
             animation: "fade_from_bottom",
           }}
         />
-        <Stack.Screen name="settings-nav" />
+        <Stack.Screen
+          name="settings-nav"
+          options={{
+            title: "",
+            headerTransparent: true,
+          }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
     </AuthProvider>

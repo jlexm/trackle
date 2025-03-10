@@ -1,27 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 
-import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import MyColors from "../atoms/my-colors";
-import MyText from "../atoms/my-text";
-import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import {
-  ActivityIndicator,
-  Avatar,
-  Card,
-  IconButton,
-} from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import MyButton from "../atoms/my-button";
+import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native"
+import MyColors from "../atoms/my-colors"
+import MyText from "../atoms/my-text"
+import { Feather } from "@expo/vector-icons"
+import { useRouter } from "expo-router"
+import { ActivityIndicator, Avatar, Card, IconButton } from "react-native-paper"
+import { SafeAreaView } from "react-native-safe-area-context"
+import MyButton from "../atoms/my-button"
 
 export default function LogsScreen() {
-  const router = useRouter();
+  const router = useRouter()
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
-    const timeoutId = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timeoutId);
-  }, []);
+    const timeoutId = setTimeout(() => setIsLoading(false), 1000)
+    return () => clearTimeout(timeoutId)
+  }, [])
   const turtles = [
     {
       id: "1",
@@ -68,7 +63,7 @@ export default function LogsScreen() {
       image:
         "https://www.2fla.com/sites/default/files/loggerhead-001-adolfo-felix-BXN16VVFEio-unsplash.jpg",
     },
-  ];
+  ]
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -148,7 +143,7 @@ export default function LogsScreen() {
         </ScrollView>
       )}
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -217,4 +212,4 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-});
+})

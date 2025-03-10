@@ -72,7 +72,7 @@ export default function SignUpScreen() {
             buttonColor={MyColors.dark}
             fontColor={MyColors.white}
             onPress={signUp}
-            disabled={loading} // Disable button when loading
+            disabled={loading}
           />
         </View>
       </ScrollView>
