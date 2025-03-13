@@ -15,6 +15,7 @@ import { Feather } from "@expo/vector-icons"
 import PagerView from "react-native-pager-view"
 import { router } from "expo-router"
 import { useAuth } from "../auth/auth-context"
+import { turtleData } from "@/data/turtleData"
 
 export default function Homescreen() {
   const { user } = useAuth()
@@ -25,13 +26,7 @@ export default function Homescreen() {
   const [currentPage, setCurrentPage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
-  const images = [
-    "https://files.worldwildlife.org/wwfcmsprod/images/Marine_Turtle/story_full_width/t7tho497w_SeaTurtle_1600x600px.jpg",
-    "https://files.worldwildlife.org/wwfcmsprod/images/olive_ridley_turtle_090512_hero/story_full_width/mjf8tmywz_SCR_287332.jpg",
-    "https://files.worldwildlife.org/wwfcmsprod/images/SCR_289416.jpg/story_full_width/8x943jdagl_SCR_289416.jpg",
-    "https://www.2fla.com/sites/default/files/loggerhead-001-adolfo-felix-BXN16VVFEio-unsplash.jpg",
-    "https://www.boem.gov/sites/default/files/styles/max_width_600px/public/images/leatherback_turtle_photo_credit_noaa_fisheries.jpg?itok=i7yPTVpw",
-  ].map((uri, index) => ({ id: String(index + 1), uri }))
+  const images = turtleData.map(({ id, image }) => ({ id, uri: image }))
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), 2000)
@@ -132,10 +127,17 @@ export default function Homescreen() {
             initialPage={0}
             onPageSelected={(e) => setCurrentPage(e.nativeEvent.position)}
           >
-            {images.map(({ id, uri }) => (
-              <View key={id} style={styles.imageContainer}>
-                <Image source={{ uri }} style={styles.image} />
-              </View>
+            {turtleData.map(({ id, image }) => (
+              <TouchableOpacity
+                key={id}
+                onPress={() =>
+                  router.push({ pathname: "/turtle/[id]", params: { id } })
+                }
+              >
+                <View style={styles.imageContainer}>
+                  <Image source={{ uri: image }} style={styles.image} />
+                </View>
+              </TouchableOpacity>
             ))}
           </PagerView>
 

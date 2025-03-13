@@ -32,6 +32,10 @@ export default function RootLayout() {
             headerTransparent: true,
           }}
         />
+        <Stack.Screen
+          name="turtle/[id]"
+          options={{ title: "", headerTransparent: true }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
     </AuthProvider>
