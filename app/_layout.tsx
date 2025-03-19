@@ -36,6 +36,10 @@ export default function RootLayout() {
           name="turtle/[id]"
           options={{ title: "", headerTransparent: true }}
         />
+        <Stack.Screen
+          name="create-turtle-nav"
+          options={{ title: "", headerTransparent: true }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
     </AuthProvider>

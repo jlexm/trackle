@@ -6,7 +6,7 @@ import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { ActivityIndicator, Avatar, Card, IconButton } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { turtleData } from "@/data/turtleData" // 🔥 Import turtleData
+import { turtleData } from "@/data/turtleData"
 
 export default function LogsScreen() {
   const router = useRouter()
@@ -59,6 +59,19 @@ export default function LogsScreen() {
           >
             {turtleData.length}
           </MyText>
+
+          <Card
+            style={[
+              styles.card,
+              { alignItems: "center", justifyContent: "center", padding: 20 },
+            ]}
+            onPress={() => router.push("/create-turtle-nav")}
+          >
+            <IconButton icon="plus" size={40} />
+            <MyText textType="body" textColor={MyColors.black}>
+              Add Turtle
+            </MyText>
+          </Card>
 
           {turtleData.map((turtle) => (
             <Card

@@ -42,7 +42,7 @@ export default function TurtleDetailsScreen() {
       {showQR ? (
         <View style={styles.qrContainer}>
           <QRCode
-            value={turtle.id}
+            value={`RT-${turtle.id}`}
             size={150}
             color="black"
             backgroundColor="white"
@@ -64,31 +64,31 @@ export default function TurtleDetailsScreen() {
       <Card style={styles.card}>
         <Card.Content style={styles.cardContent}>
           <MyText textType="caption" textColor={MyColors.black}>
-            <MyText textType="turtleInfo" textColor={MyColors.black}>
+            <MyText textType="bodyBold" textColor={MyColors.black}>
               Date Rescued:
             </MyText>{" "}
             {turtle.dateRescued}
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
-            <MyText textType="turtleInfo" textColor={MyColors.black}>
+            <MyText textType="bodyBold" textColor={MyColors.black}>
               Length:
             </MyText>{" "}
             {turtle.turtleLength} cm
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
-            <MyText textType="turtleInfo" textColor={MyColors.black}>
+            <MyText textType="bodyBold" textColor={MyColors.black}>
               Weight:
             </MyText>{" "}
             {turtle.turtleWeight} kg
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
-            <MyText textType="turtleInfo" textColor={MyColors.black}>
+            <MyText textType="bodyBold" textColor={MyColors.black}>
               Location:
             </MyText>{" "}
             {turtle.locationRescued}
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
-            <MyText textType="turtleInfo" textColor={MyColors.black}>
+            <MyText textType="bodyBold" textColor={MyColors.black}>
               Status:
             </MyText>{" "}
             {turtle.status}

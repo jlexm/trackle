@@ -4,25 +4,25 @@ import {
   StyleSheet,
   ViewStyle,
   TouchableOpacity,
-} from "react-native";
-import { useFonts, Ubuntu_300Light } from "@expo-google-fonts/ubuntu";
-import MyColors from "./my-colors";
-import React, { useState } from "react";
-import Ionicons from "@expo/vector-icons/Ionicons";
+} from "react-native"
+import { useFonts, Ubuntu_300Light } from "@expo-google-fonts/ubuntu"
+import MyColors from "./my-colors"
+import React, { useState } from "react"
+import Ionicons from "@expo/vector-icons/Ionicons"
 
 type MyInputFormProps = {
-  label: string;
-  icon?: keyof typeof Ionicons.glyphMap;
-  iconSize?: number;
-  width?: number;
-  height?: number;
-  fontSize?: number;
-  fontColor?: string;
-  style?: ViewStyle;
-  secureTextEntry?: boolean;
-  onChange?: (text: string) => void;
-  value?: string;
-};
+  label: string
+  icon?: keyof typeof Ionicons.glyphMap
+  iconSize?: number
+  width?: number
+  height?: number
+  fontSize?: number
+  fontColor?: string
+  style?: ViewStyle
+  secureTextEntry?: boolean
+  onChange?: (text: string) => void
+  value?: string
+}
 
 export default function MyInputForm({
   label,
@@ -37,8 +37,8 @@ export default function MyInputForm({
   onChange,
   value,
 }: MyInputFormProps) {
-  const [fontsLoaded] = useFonts({ Ubuntu_300Light });
-  const [isPasswordVisible, setIsPasswordVisible] = useState(!secureTextEntry);
+  const [fontsLoaded] = useFonts({ Ubuntu_300Light })
+  const [isPasswordVisible, setIsPasswordVisible] = useState(!secureTextEntry)
 
   if (!fontsLoaded) {
     return (
@@ -54,7 +54,7 @@ export default function MyInputForm({
           editable={false}
         />
       </View>
-    );
+    )
   }
 
   return (
@@ -94,7 +94,7 @@ export default function MyInputForm({
         </TouchableOpacity>
       )}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -115,4 +115,4 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: 8,
   },
-});
+})

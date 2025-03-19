@@ -25,7 +25,7 @@ const textStyles = {
     fontSize: 14,
     fontFamily: "Ubuntu_300Light",
   },
-  turtleInfo: {
+  bodyBold: {
     fontSize: 18,
     fontFamily: "Ubuntu_700Bold",
   },
