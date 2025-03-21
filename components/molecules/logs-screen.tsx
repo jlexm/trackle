@@ -6,16 +6,49 @@ import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { ActivityIndicator, Avatar, Card, IconButton } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { turtleData } from "@/data/turtleData"
+import { collection, getDocs } from "firebase/firestore"
+import { db } from "../../FirebaseConfig"
 
 export default function LogsScreen() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [turtles, setTurtles] = useState<
+    {
+      id: string
+      imageUrl?: string
+      status: string
+      dateRescued: string
+      location: string
+    }[]
+  >([])
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timeoutId)
+    fetchTurtles()
   }, [])
+
+  const fetchTurtles = async () => {
+    setIsLoading(true)
+    try {
+      const querySnapshot = await getDocs(collection(db, "turtles"))
+      const turtleList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as typeof turtles
+      setTurtles(turtleList)
+    } catch (error) {
+      console.error("Error fetching turtles:", error)
+    }
+    setIsLoading(false)
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date)
+  }
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -51,15 +84,13 @@ export default function LogsScreen() {
               <Feather name="search" size={24} color={MyColors.black} />
             </TouchableOpacity>
           </View>
-
           <MyText
             textType="title"
             textColor={MyColors.black}
             style={styles.count}
           >
-            {turtleData.length}
+            {turtles.length}
           </MyText>
-
           <Card
             style={[
               styles.card,
@@ -72,8 +103,7 @@ export default function LogsScreen() {
               Add Turtle
             </MyText>
           </Card>
-
-          {turtleData.map((turtle) => (
+          {turtles.map((turtle) => (
             <Card
               key={turtle.id}
               style={styles.card}
@@ -90,7 +120,7 @@ export default function LogsScreen() {
                 left={(props) => (
                   <Avatar.Image
                     {...props}
-                    source={{ uri: turtle.image }}
+                    source={{ uri: turtle.imageUrl }}
                     size={50}
                   />
                 )}
@@ -104,10 +134,16 @@ export default function LogsScreen() {
               />
               <Card.Content>
                 <MyText textType="body" textColor={MyColors.black}>
-                  Date Rescued: {turtle.dateRescued}
+                  <MyText textType="bodyBold" textColor={MyColors.black}>
+                    Date Rescued:{" "}
+                  </MyText>{" "}
+                  {formatDate(turtle.dateRescued)}
                 </MyText>
                 <MyText textType="body" textColor={MyColors.black}>
-                  Location: {turtle.locationRescued}
+                  <MyText textType="bodyBold" textColor={MyColors.black}>
+                    Location:
+                  </MyText>{" "}
+                  {turtle.location}
                 </MyText>
               </Card.Content>
             </Card>
@@ -159,9 +195,5 @@ const styles = StyleSheet.create({
     backgroundColor: MyColors.white,
     elevation: 10,
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
 })

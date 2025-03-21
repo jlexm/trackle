@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ViewStyle,
   TouchableOpacity,
+  KeyboardTypeOptions,
 } from "react-native"
 import { useFonts, Ubuntu_300Light } from "@expo-google-fonts/ubuntu"
 import MyColors from "./my-colors"
@@ -22,6 +23,7 @@ type MyInputFormProps = {
   secureTextEntry?: boolean
   onChange?: (text: string) => void
   value?: string
+  keyboardType?: KeyboardTypeOptions
 }
 
 export default function MyInputForm({
@@ -36,6 +38,7 @@ export default function MyInputForm({
   secureTextEntry = false,
   onChange,
   value,
+  keyboardType = "default",
 }: MyInputFormProps) {
   const [fontsLoaded] = useFonts({ Ubuntu_300Light })
   const [isPasswordVisible, setIsPasswordVisible] = useState(!secureTextEntry)
@@ -76,6 +79,7 @@ export default function MyInputForm({
         accessibilityLabel={label}
         onChangeText={onChange}
         value={value}
+        keyboardType={keyboardType}
       />
       {secureTextEntry && (
         <TouchableOpacity

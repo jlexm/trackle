@@ -15,7 +15,8 @@ import { Feather } from "@expo/vector-icons"
 import PagerView from "react-native-pager-view"
 import { router } from "expo-router"
 import { useAuth } from "../auth/auth-context"
-import { turtleData } from "@/data/turtleData"
+import { collection, getDocs } from "firebase/firestore"
+import { db } from "../../FirebaseConfig"
 
 export default function Homescreen() {
   const { user } = useAuth()
@@ -25,21 +26,40 @@ export default function Homescreen() {
   const pagerRef = useRef<PagerView>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-
-  const images = turtleData.map(({ id, image }) => ({ id, uri: image }))
+  const [turtles, setTurtles] = useState<{ id: string; imageUrl?: string }[]>(
+    []
+  )
 
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), 2000)
+    fetchTurtles()
+  }, [])
+
+  const fetchTurtles = async () => {
+    setIsLoading(true)
+    try {
+      const querySnapshot = await getDocs(collection(db, "turtles"))
+      const turtleList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      setTurtles(turtleList)
+    } catch (error) {
+      console.error("Error fetching turtles:", error)
+    }
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentPage((prevPage) => {
-        const nextPage = (prevPage + 1) % images.length
+        const nextPage = (prevPage + 1) % turtles.length
         pagerRef.current?.setPage(nextPage)
         return nextPage
       })
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [turtles])
 
   const turtleTypes = [
     {
@@ -68,7 +88,6 @@ export default function Homescreen() {
         "https://www.2fla.com/sites/default/files/loggerhead-001-adolfo-felix-BXN16VVFEio-unsplash.jpg",
     },
   ]
-
   return (
     <SafeAreaView style={styles.safeContainer}>
       {isLoading ? (
@@ -118,7 +137,7 @@ export default function Homescreen() {
             textColor={MyColors.black}
             style={styles.count}
           >
-            {images.length}
+            {turtles.length}
           </MyText>
 
           <PagerView
@@ -127,7 +146,7 @@ export default function Homescreen() {
             initialPage={0}
             onPageSelected={(e) => setCurrentPage(e.nativeEvent.position)}
           >
-            {turtleData.map(({ id, image }) => (
+            {turtles.map(({ id, imageUrl }) => (
               <TouchableOpacity
                 key={id}
                 onPress={() =>
@@ -135,42 +154,39 @@ export default function Homescreen() {
                 }
               >
                 <View style={styles.imageContainer}>
-                  <Image source={{ uri: image }} style={styles.image} />
+                  <Image source={{ uri: imageUrl }} style={styles.image} />
                 </View>
               </TouchableOpacity>
             ))}
           </PagerView>
 
-          <View style={styles.ViewAll}>
-            <View style={styles.pagination}>
-              {images.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    {
-                      backgroundColor:
-                        currentPage === index ? MyColors.black : MyColors.white,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.5}
-              onPress={() => router.push("/logs-nav")}
-            >
-              <MyText
-                textType="body"
-                textColor={MyColors.black}
-                style={styles.viewAllText}
-              >
-                View All
-              </MyText>
-            </TouchableOpacity>
+          <View style={styles.pagination}>
+            {turtles.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor:
+                      currentPage === index ? MyColors.black : MyColors.white,
+                  },
+                ]}
+              />
+            ))}
           </View>
 
+          <TouchableOpacity
+            activeOpacity={0.5}
+            onPress={() => router.push("/logs-nav")}
+          >
+            <MyText
+              textType="body"
+              textColor={MyColors.black}
+              style={styles.viewAllText}
+            >
+              View All
+            </MyText>
+          </TouchableOpacity>
           <View style={styles.turtleTypes}>
             <MyText textType="subtitle" textColor={MyColors.black}>
               Types of turtles in the Philippines

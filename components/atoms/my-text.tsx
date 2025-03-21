@@ -26,7 +26,7 @@ const textStyles = {
     fontFamily: "Ubuntu_300Light",
   },
   bodyBold: {
-    fontSize: 18,
+    fontSize: 14,
     fontFamily: "Ubuntu_700Bold",
   },
 }

@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { View, Image, StyleSheet } from "react-native"
+import React, { useEffect, useState } from "react"
+import { View, Image, StyleSheet, ActivityIndicator } from "react-native"
 import { useLocalSearchParams } from "expo-router"
 import { Card, Button, Switch, Text } from "react-native-paper"
 import QRCode from "react-native-qrcode-svg"
@@ -7,12 +7,53 @@ import MyText from "@/components/atoms/my-text"
 import MyColors from "@/components/atoms/my-colors"
 import MyButton from "@/components/atoms/my-button"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { turtleData } from "@/data/turtleData"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "../../FirebaseConfig"
 
 export default function TurtleDetailsScreen() {
   const { id } = useLocalSearchParams()
-  const turtle = turtleData.find((t) => t.id === id)
-  const [showQR, setShowQR] = useState(true)
+  const [turtle, setTurtle] = useState<{
+    userId: string
+    length: number
+    weight: number
+    location: string
+    status: string
+    imageUrl?: string
+    dateRescued: string
+  } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [showQR, setShowQR] = useState(false)
+
+  useEffect(() => {
+    const fetchTurtle = async () => {
+      if (!id) return
+      setIsLoading(true)
+      try {
+        const docRef = doc(db, "turtles", id.toString())
+        const docSnap = await getDoc(docRef)
+
+        if (docSnap.exists()) {
+          setTurtle(docSnap.data() as any)
+        } else {
+          console.log("No such turtle!")
+          setTurtle(null)
+        }
+      } catch (error) {
+        console.error("Error fetching turtle:", error)
+      }
+      setIsLoading(false)
+    }
+
+    fetchTurtle()
+  }, [id])
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color={MyColors.black} />
+      </SafeAreaView>
+    )
+  }
 
   if (!turtle) {
     return (
@@ -30,7 +71,7 @@ export default function TurtleDetailsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.switchContainer}>
         <MyText textType="title" textColor={MyColors.black}>
-          Rescued Turtle #{turtle.id}
+          Rescued Turtle #{id}
         </MyText>
       </View>
 
@@ -42,14 +83,14 @@ export default function TurtleDetailsScreen() {
       {showQR ? (
         <View style={styles.qrContainer}>
           <QRCode
-            value={`RT-${turtle.id}`}
+            value={`RT-${id}`}
             size={150}
             color="black"
             backgroundColor="white"
           />
         </View>
       ) : (
-        <Image source={{ uri: turtle.image }} style={styles.turtleImage} />
+        <Image source={{ uri: turtle.imageUrl }} style={styles.turtleImage} />
       )}
 
       <Button
@@ -67,25 +108,29 @@ export default function TurtleDetailsScreen() {
             <MyText textType="bodyBold" textColor={MyColors.black}>
               Date Rescued:
             </MyText>{" "}
-            {turtle.dateRescued}
+            {new Date(turtle.dateRescued).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
             <MyText textType="bodyBold" textColor={MyColors.black}>
               Length:
             </MyText>{" "}
-            {turtle.turtleLength} cm
+            {turtle.length} cm
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
             <MyText textType="bodyBold" textColor={MyColors.black}>
               Weight:
             </MyText>{" "}
-            {turtle.turtleWeight} kg
+            {turtle.weight} kg
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
             <MyText textType="bodyBold" textColor={MyColors.black}>
               Location:
             </MyText>{" "}
-            {turtle.locationRescued}
+            {turtle.location}
           </MyText>
           <MyText textType="caption" textColor={MyColors.black}>
             <MyText textType="bodyBold" textColor={MyColors.black}>

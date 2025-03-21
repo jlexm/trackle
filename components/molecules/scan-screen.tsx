@@ -1,72 +1,72 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Text } from "react-native";
-import { Camera, CameraView } from "expo-camera";
-import MyColors from "../atoms/my-colors";
-import MyButton from "../atoms/my-button";
-import MyText from "../atoms/my-text";
+import React, { useState, useEffect } from "react"
+import { View, StyleSheet, Text } from "react-native"
+import { Camera, CameraView } from "expo-camera"
+import { useRouter } from "expo-router"
+import MyColors from "../atoms/my-colors"
+import MyButton from "../atoms/my-button"
+import MyText from "../atoms/my-text"
 
 export default function ScanScreen() {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [scanned, setScanned] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+  const [scanning, setScanning] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
-    })();
-  }, []);
+    ;(async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync()
+      setHasPermission(status === "granted")
+    })()
+  }, [])
 
-  const handleBarCodeScanned = ({
-    type,
-    data,
-  }: {
-    type: string;
-    data: string;
-  }) => {
-    setScanned(true);
-    alert(`Scanned ${type}: ${data}`);
-  };
+  const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
+    setScanning(false)
+
+    const turtleId = data.replace("RT-", "")
+    router.push({ pathname: "/turtle/[id]", params: { id: turtleId } })
+  }
 
   if (hasPermission === null)
-    return <Text>Requesting camera permission...</Text>;
-  if (!hasPermission) return <Text>No access to camera</Text>;
+    return <Text>Requesting camera permission...</Text>
+  if (!hasPermission) return <Text>No access to camera</Text>
 
   return (
     <View style={styles.container}>
-      <CameraView
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: ["qr", "pdf417"],
-        }}
-        style={styles.camera}
-      >
-        {/* Scanner Overlay */}
-        <View style={styles.overlay}>
-          <MyText textType="title" textColor={MyColors.white}>
-            Scan a turtle QR
-          </MyText>
-          <View style={styles.scannerFrame}>
-            <View style={[styles.corner, styles.topLeft]} />
-            <View style={[styles.corner, styles.topRight]} />
-            <View style={[styles.corner, styles.bottomLeft]} />
-            <View style={[styles.corner, styles.bottomRight]} />
+      {scanning && (
+        <CameraView
+          onBarcodeScanned={handleBarCodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr", "pdf417"],
+          }}
+          style={styles.camera}
+        >
+          {/* Scanner Overlay */}
+          <View style={styles.overlay}>
+            <MyText textType="title" textColor={MyColors.white}>
+              Scan a turtle QR
+            </MyText>
+            <View style={styles.scannerFrame}>
+              <View style={[styles.corner, styles.topLeft]} />
+              <View style={[styles.corner, styles.topRight]} />
+              <View style={[styles.corner, styles.bottomLeft]} />
+              <View style={[styles.corner, styles.bottomRight]} />
+            </View>
           </View>
-        </View>
-      </CameraView>
+        </CameraView>
+      )}
 
-      {scanned && (
+      {!scanning && (
         <MyButton
           buttonName="SCAN AGAIN"
           buttonColor={MyColors.dark}
           fontColor={MyColors.white}
           width={150}
           height={50}
-          onPress={() => setScanned(false)}
+          onPress={() => setScanning(true)}
           style={styles.scanButton}
         />
       )}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -124,4 +124,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: 4,
     borderRightWidth: 4,
   },
-});
+})
