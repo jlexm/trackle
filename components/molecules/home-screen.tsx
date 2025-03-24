@@ -15,12 +15,11 @@ import { Feather } from "@expo/vector-icons"
 import PagerView from "react-native-pager-view"
 import { router } from "expo-router"
 import { useAuth } from "../auth/auth-context"
-import { collection, getDocs } from "firebase/firestore"
+import { collection, getDocs, query, where } from "firebase/firestore"
 import { db } from "../../FirebaseConfig"
 
 export default function Homescreen() {
   const { user } = useAuth()
-  const username = user?.email ? user.email.split("@")[0] : "Guest"
 
   const { width } = useMemo(() => Dimensions.get("window"), [])
   const pagerRef = useRef<PagerView>(null)
@@ -37,11 +36,17 @@ export default function Homescreen() {
   const fetchTurtles = async () => {
     setIsLoading(true)
     try {
-      const querySnapshot = await getDocs(collection(db, "turtles"))
+      if (!user) return
+
+      const turtlesRef = collection(db, "turtles")
+      const q = query(turtlesRef, where("userId", "==", user.uid))
+      const querySnapshot = await getDocs(q)
+
       const turtleList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }))
+
       setTurtles(turtleList)
     } catch (error) {
       console.error("Error fetching turtles:", error)
@@ -100,15 +105,6 @@ export default function Homescreen() {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.greetingContainer}>
-            <MyText textType="title" textColor={MyColors.black}>
-              Hi,{" "}
-              <MyText textType="title" textColor={MyColors.green}>
-                {username}
-              </MyText>
-            </MyText>
-          </View>
-
           <View style={styles.header}>
             <MyText
               textType="subtitle"
@@ -337,9 +333,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  greetingContainer: {
-    alignSelf: "stretch",
-    marginBottom: 40,
   },
 })

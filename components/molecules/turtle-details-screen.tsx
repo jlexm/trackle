@@ -93,14 +93,16 @@ export default function TurtleDetailsScreen() {
         <Image source={{ uri: turtle.imageUrl }} style={styles.turtleImage} />
       )}
 
-      <Button
-        mode="contained"
-        buttonColor="red"
+      <MyButton
+        style={styles.saveButton}
+        buttonName="DELETE"
+        width={120}
+        fontSize={16}
+        fontColor={MyColors.white}
+        buttonColor={MyColors.red}
         icon="delete"
-        style={styles.deleteButton}
-      >
-        DELETE
-      </Button>
+        onPress={() => console.log("Delete!")}
+      />
 
       <Card style={styles.card}>
         <Card.Content style={styles.cardContent}>

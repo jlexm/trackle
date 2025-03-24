@@ -1,16 +1,31 @@
 import { useEffect, useState } from "react"
-import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native"
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native"
 import MyColors from "../atoms/my-colors"
 import MyText from "../atoms/my-text"
 import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { ActivityIndicator, Avatar, Card, IconButton } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { collection, getDocs } from "firebase/firestore"
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+} from "firebase/firestore"
 import { db } from "../../FirebaseConfig"
+import { useAuth } from "../auth/auth-context"
 
 export default function LogsScreen() {
   const router = useRouter()
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [turtles, setTurtles] = useState<
     {
@@ -27,18 +42,52 @@ export default function LogsScreen() {
   }, [])
 
   const fetchTurtles = async () => {
+    if (!user) return
     setIsLoading(true)
     try {
-      const querySnapshot = await getDocs(collection(db, "turtles"))
+      const turtlesRef = collection(db, "turtles")
+      const q = query(turtlesRef, where("userId", "==", user.uid))
+      const querySnapshot = await getDocs(q)
+
       const turtleList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as typeof turtles
+
       setTurtles(turtleList)
     } catch (error) {
       console.error("Error fetching turtles:", error)
     }
     setIsLoading(false)
+  }
+
+  const deleteTurtle = async (id: string) => {
+    setTimeout(() => {
+      Alert.alert(
+        "Delete Turtle",
+        "Are you sure you want to delete this turtle?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await deleteDoc(doc(db, "turtles", id))
+                setTurtles((prevTurtles) =>
+                  prevTurtles.filter((turtle) => turtle.id !== id)
+                )
+              } catch (error) {
+                console.error("Error deleting turtle:", error)
+              }
+            },
+          },
+        ]
+      )
+    }, 100)
   }
 
   const formatDate = (dateString: string) => {
@@ -128,7 +177,7 @@ export default function LogsScreen() {
                   <IconButton
                     {...props}
                     icon="delete"
-                    onPress={() => alert(`Delete ${turtle.id}`)}
+                    onPress={() => deleteTurtle(turtle.id)}
                   />
                 )}
               />
@@ -136,7 +185,7 @@ export default function LogsScreen() {
                 <MyText textType="body" textColor={MyColors.black}>
                   <MyText textType="bodyBold" textColor={MyColors.black}>
                     Date Rescued:{" "}
-                  </MyText>{" "}
+                  </MyText>
                   {formatDate(turtle.dateRescued)}
                 </MyText>
                 <MyText textType="body" textColor={MyColors.black}>

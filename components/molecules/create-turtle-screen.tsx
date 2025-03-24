@@ -198,9 +198,9 @@ export default function CreateTurtleScreen() {
                 enabled={false}
                 color="gray"
               />
-              <Picker.Item label="Healthy" value="healthy" />
-              <Picker.Item label="Injured" value="injured" />
-              <Picker.Item label="Under Treatment" value="under_treatment" />
+              <Picker.Item label="Healthy" value="Healthy" />
+              <Picker.Item label="Injured" value="Injured" />
+              <Picker.Item label="Under Treatment" value="Under Treatment" />
             </Picker>
           </View>
         </View>
