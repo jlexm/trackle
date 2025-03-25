@@ -15,7 +15,13 @@ import { Feather } from "@expo/vector-icons"
 import PagerView from "react-native-pager-view"
 import { router } from "expo-router"
 import { useAuth } from "../auth/auth-context"
-import { collection, getDocs, query, where } from "firebase/firestore"
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore"
 import { db } from "../../FirebaseConfig"
 
 export default function Homescreen() {
@@ -33,38 +39,30 @@ export default function Homescreen() {
     fetchTurtles()
   }, [])
 
-  const fetchTurtles = async () => {
+  const fetchTurtles = () => {
+    if (!user) return
     setIsLoading(true)
-    try {
-      if (!user) return
 
-      const turtlesRef = collection(db, "turtles")
-      const q = query(turtlesRef, where("userId", "==", user.uid))
-      const querySnapshot = await getDocs(q)
+    const turtlesRef = collection(db, "turtles")
+    const q = query(turtlesRef, where("userId", "==", user.uid))
 
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const turtleList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }))
 
       setTurtles(turtleList)
-    } catch (error) {
-      console.error("Error fetching turtles:", error)
-    }
-    setIsLoading(false)
+      setIsLoading(false)
+    })
+
+    return unsubscribe
   }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentPage((prevPage) => {
-        const nextPage = (prevPage + 1) % turtles.length
-        pagerRef.current?.setPage(nextPage)
-        return nextPage
-      })
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [turtles])
+    const unsubscribe = fetchTurtles()
+    return () => unsubscribe && unsubscribe()
+  }, [])
 
   const turtleTypes = [
     {
