@@ -25,6 +25,8 @@ export default function CreateTurtleScreen() {
 
   const auth = getAuth()
 
+  const [isSaving, setIsSaving] = useState(false)
+
   const handlePickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -60,19 +62,53 @@ export default function CreateTurtleScreen() {
   }
 
   const handleSaveTurtle = async () => {
+    if (isSaving) return
+
     const user = auth.currentUser
     if (!user) {
       alert("You must be logged in to add a turtle.")
       return
     }
 
+    if (!length || isNaN(Number(length)) || Number(length) <= 0) {
+      alert("Please enter a valid length (numeric and greater than 0).")
+      return
+    }
+
+    if (!weight || isNaN(Number(weight)) || Number(weight) <= 0) {
+      alert("Please enter a valid weight (numeric and greater than 0).")
+      return
+    }
+
+    if (!location.trim()) {
+      alert("Please enter a location.")
+      return
+    }
+
+    if (!status) {
+      alert("Please select a status.")
+      return
+    }
+
+    if (!imageUri) {
+      alert("Please upload an image before saving.")
+      return
+    }
+
+    setIsSaving(true)
+
     try {
       const imageUrl = await handleUploadImage()
+      if (!imageUrl) {
+        alert("Failed to upload image. Please try again.")
+        setIsSaving(false)
+        return
+      }
 
-      const docRef = await addDoc(collection(db, "turtles"), {
+      await addDoc(collection(db, "turtles"), {
         userId: user.uid,
-        length,
-        weight,
+        length: Number(length),
+        weight: Number(weight),
         location,
         status,
         imageUrl,
@@ -89,8 +125,12 @@ export default function CreateTurtleScreen() {
       router.replace("../logs-nav")
     } catch (error) {
       console.error("Error adding document: ", error)
-      alert("Failed to add turtle.")
+      alert(
+        "Failed to add turtle. Please check your internet connection and try again."
+      )
     }
+
+    setIsSaving(false)
   }
 
   return (
@@ -207,12 +247,13 @@ export default function CreateTurtleScreen() {
 
         <MyButton
           onPress={handleSaveTurtle}
-          buttonName="SAVE"
-          buttonColor={MyColors.green}
+          buttonName={isSaving ? "SAVING..." : "SAVE"}
+          buttonColor={isSaving ? MyColors.dark : MyColors.green}
           fontColor={MyColors.white}
-          icon="content-save"
+          icon={isSaving ? "progress-clock" : "content-save"}
           fontSize={16}
           width={120}
+          disabled={isSaving}
         />
       </ScrollView>
     </SafeAreaView>

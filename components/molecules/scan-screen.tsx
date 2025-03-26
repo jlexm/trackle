@@ -39,7 +39,6 @@ export default function ScanScreen() {
           }}
           style={styles.camera}
         >
-          {/* Scanner Overlay */}
           <View style={styles.overlay}>
             <MyText textType="title" textColor={MyColors.white}>
               Scan a turtle QR

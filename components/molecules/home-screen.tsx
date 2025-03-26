@@ -42,7 +42,6 @@ export default function Homescreen() {
   const fetchTurtles = () => {
     if (!user) return
     setIsLoading(true)
-
     const turtlesRef = collection(db, "turtles")
     const q = query(turtlesRef, where("userId", "==", user.uid))
 

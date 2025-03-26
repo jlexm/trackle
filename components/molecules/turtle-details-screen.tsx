@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { View, Image, StyleSheet, ActivityIndicator } from "react-native"
 import { useLocalSearchParams } from "expo-router"
-import { Card, Button, Switch, Text } from "react-native-paper"
-import QRCode from "react-native-qrcode-svg"
+import { Card, Switch, Text } from "react-native-paper"
 import MyText from "@/components/atoms/my-text"
 import MyColors from "@/components/atoms/my-colors"
 import MyButton from "@/components/atoms/my-button"
@@ -81,14 +80,12 @@ export default function TurtleDetailsScreen() {
       </View>
 
       {showQR ? (
-        <View style={styles.qrContainer}>
-          <QRCode
-            value={`RT-${id}`}
-            size={150}
-            color="black"
-            backgroundColor="white"
-          />
-        </View>
+        <Image
+          source={{
+            uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RT-${id}`,
+          }}
+          style={{ width: 150, height: 150, alignSelf: "center" }}
+        />
       ) : (
         <Image source={{ uri: turtle.imageUrl }} style={styles.turtleImage} />
       )}
