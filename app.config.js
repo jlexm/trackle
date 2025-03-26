@@ -18,6 +18,7 @@ export default {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      package: "com.x0xdevenjoyer.trackle",
     },
     web: {
       bundler: "metro",
