@@ -1,95 +1,98 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Image,
-  Dimensions,
-  SafeAreaView,
   ScrollView,
+  Modal,
+  TextInput,
 } from "react-native"
-import { ActivityIndicator, Card, TouchableRipple } from "react-native-paper"
 import MyColors from "../atoms/my-colors"
 import MyText from "../atoms/my-text"
 import { Feather } from "@expo/vector-icons"
-import PagerView from "react-native-pager-view"
-import { router } from "expo-router"
-import { useAuth } from "../auth/auth-context"
+import { useRouter } from "expo-router"
+import { ActivityIndicator, Card, Button } from "react-native-paper"
+import { SafeAreaView } from "react-native-safe-area-context"
 import {
   collection,
-  getDocs,
-  onSnapshot,
   query,
   where,
+  getDocs,
+  doc,
+  updateDoc,
+  arrayUnion,
+  getDoc,
 } from "firebase/firestore"
-import { db } from "../../FirebaseConfig"
+import { useAuth } from "../auth/auth-context"
+import { db } from "@/FirebaseConfig"
 
-export default function Homescreen() {
+export default function HomeScreen() {
+  const router = useRouter()
   const { user } = useAuth()
 
-  const { width } = useMemo(() => Dimensions.get("window"), [])
-  const pagerRef = useRef<PagerView>(null)
-  const [currentPage, setCurrentPage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const [turtles, setTurtles] = useState<{ id: string; imageUrl?: string }[]>(
-    []
-  )
+  const [compounds, setCompounds] = useState<{ id: string; name: string }[]>([])
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [compoundCode, setCompoundCode] = useState("")
 
   useEffect(() => {
-    fetchTurtles()
-  }, [])
-
-  const fetchTurtles = () => {
     if (!user) return
-    setIsLoading(true)
-    const turtlesRef = collection(db, "turtles")
-    const q = query(turtlesRef, where("userId", "==", user.uid))
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const turtleList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }))
+    const fetchCompounds = async () => {
+      setIsLoading(true)
+      try {
+        const q = query(
+          collection(db, "compounds"),
+          where("members", "array-contains", user.uid)
+        )
+        const querySnapshot = await getDocs(q)
+        const compoundsList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().compoundName || "Unnamed Compound",
+        }))
+        setCompounds(compoundsList)
+      } catch (error) {
+        console.error("Error fetching compounds:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-      setTurtles(turtleList)
-      setIsLoading(false)
-    })
+    fetchCompounds()
+  }, [user])
 
-    return unsubscribe
+  const joinCompound = async () => {
+    if (!compoundCode.trim()) {
+      console.log("Please enter a compound code")
+      return
+    }
+
+    if (!user) {
+      console.log("User not authenticated")
+      return
+    }
+
+    try {
+      const compoundRef = doc(db, "compounds", compoundCode)
+      const compoundSnap = await getDoc(compoundRef)
+
+      if (!compoundSnap.exists()) {
+        console.log("Compound not found")
+        return
+      }
+
+      await updateDoc(compoundRef, {
+        members: arrayUnion(user.uid),
+      })
+
+      console.log(`User ${user.uid} joined compound ${compoundCode}`)
+      setIsModalVisible(false)
+      setCompoundCode("")
+    } catch (error) {
+      console.error("Error joining compound:", error)
+    }
   }
 
-  useEffect(() => {
-    const unsubscribe = fetchTurtles()
-    return () => unsubscribe && unsubscribe()
-  }, [])
-
-  const turtleTypes = [
-    {
-      title: "Green Turtle",
-      image:
-        "https://media.australian.museum/media/dd/images/1600px-Green_Turtle_Chelonia_mydas_6133097542.width-1200.c1df197.jpg",
-    },
-    {
-      title: "Hawksbill Turtle",
-      image:
-        "https://www.fisheries.noaa.gov/s3//styles/full_width/s3/dam-migration/hawksbill_sea_turtle.jpg?itok=cxzcge8K",
-    },
-    {
-      title: "Olive Ridley Turtle",
-      image:
-        "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTmYR1WtV9uhDlhowwqK-TOUI0tX9jlhVWN7YO9ZaBemHkdskICPaVlTr1yBqPxrpLdJtwssyNoUjRQdQOe34LJBA",
-    },
-    {
-      title: "Leatherback Turtle",
-      image:
-        "https://www.boem.gov/sites/default/files/styles/max_width_600px/public/images/leatherback_turtle_photo_credit_noaa_fisheries.jpg?itok=i7yPTVpw",
-    },
-    {
-      title: "Loggerhead Turtle",
-      image:
-        "https://www.2fla.com/sites/default/files/loggerhead-001-adolfo-felix-BXN16VVFEio-unsplash.jpg",
-    },
-  ]
   return (
     <SafeAreaView style={styles.safeContainer}>
       {isLoading ? (
@@ -108,121 +111,92 @@ export default function Homescreen() {
               textColor={MyColors.black}
               style={styles.title}
             >
-              Rescued Turtles
+              My Compounds
             </MyText>
             <TouchableOpacity
               style={styles.searchButton}
-              onPress={() => router.push("/search-nav")}
+              onPress={() => setIsModalVisible(true)}
             >
               <MyText
                 textType="body"
                 textColor={MyColors.black}
                 style={styles.searchText}
               >
-                Search
+                Join Compound
               </MyText>
-              <Feather name="search" size={24} color={MyColors.black} />
+              <Feather name="plus" size={24} color={MyColors.black} />
             </TouchableOpacity>
           </View>
-
           <MyText
             textType="title"
             textColor={MyColors.black}
             style={styles.count}
           >
-            {turtles.length}
+            {compounds.length}
           </MyText>
-
-          <PagerView
-            ref={pagerRef}
-            style={[styles.pager, { width }]}
-            initialPage={0}
-            onPageSelected={(e) => setCurrentPage(e.nativeEvent.position)}
-          >
-            {turtles.map(({ id, imageUrl }) => (
-              <TouchableOpacity
-                key={id}
-                onPress={() =>
-                  router.push({ pathname: "/turtle/[id]", params: { id } })
-                }
+          {compounds.length > 0 ? (
+            compounds.map((compound) => (
+              <Card
+                key={compound.id}
+                style={styles.card}
+                onPress={() => {
+                  router.push({
+                    pathname: "/compound/[id]",
+                    params: { id: compound.id },
+                  })
+                }}
               >
-                <View style={styles.imageContainer}>
-                  <Image source={{ uri: imageUrl }} style={styles.image} />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </PagerView>
-
-          <View style={styles.pagination}>
-            {turtles.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor:
-                      currentPage === index ? MyColors.black : MyColors.white,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-
-          <TouchableOpacity
-            activeOpacity={0.5}
-            onPress={() => router.push("/logs-nav")}
-          >
-            <MyText
-              textType="body"
-              textColor={MyColors.black}
-              style={styles.viewAllText}
-            >
-              View All
+                <Card.Title title={compound.name} />
+              </Card>
+            ))
+          ) : (
+            <MyText textType="body" textColor={MyColors.black}>
+              No compounds joined yet.
             </MyText>
-          </TouchableOpacity>
-          <View style={styles.turtleTypes}>
-            <MyText textType="subtitle" textColor={MyColors.black}>
-              Types of turtles in the Philippines
-            </MyText>
-            <MyText
-              textType="body"
-              textColor={MyColors.black}
-              style={{ marginTop: 10 }}
-            >
-              The Philippines is home to five sea turtle species and one native
-              turtle species.
-            </MyText>
-          </View>
-
-          <View style={styles.gridContainer}>
-            {turtleTypes.map((item, index) => (
-              <TouchableRipple
-                key={index}
-                onPress={() => alert(item.title)}
-                borderless
-                rippleColor="rgba(0, 0, 0, 0.2)"
-                style={styles.cardWrapper}
-              >
-                <Card style={styles.card}>
-                  <Image
-                    source={{ uri: item.image }}
-                    style={styles.cardImage}
-                  />
-                  <Card.Content>
-                    <MyText
-                      textType="body"
-                      textColor={MyColors.black}
-                      style={styles.cardTitle}
-                    >
-                      {item.title}
-                    </MyText>
-                  </Card.Content>
-                </Card>
-              </TouchableRipple>
-            ))}
-          </View>
+          )}
         </ScrollView>
       )}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <MyText
+              textType="title"
+              textColor={MyColors.black}
+              style={styles.modalTitle}
+            >
+              Enter Compound Code
+            </MyText>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Code"
+              value={compoundCode}
+              onChangeText={setCompoundCode}
+            />
+            <View style={styles.buttonRow}>
+              <Button
+                mode="contained"
+                onPress={joinCompound}
+                style={styles.button}
+              >
+                Join
+              </Button>
+              <Button
+                mode="outlined"
+                onPress={() => setIsModalVisible(false)}
+                style={styles.button}
+              >
+                Cancel
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -259,76 +233,54 @@ const styles = StyleSheet.create({
     fontSize: 128,
     marginBottom: 10,
   },
-  pager: {
-    height: 200,
-    marginBottom: 10,
-  },
-  imageContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-  },
-  image: {
-    width: "90%",
-    height: "100%",
-    resizeMode: "cover",
-    borderRadius: 20,
-  },
-  pagination: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: MyColors.black,
-  },
-  viewAllText: {
-    fontSize: 14,
-  },
-  turtleTypes: {
-    alignSelf: "stretch",
-    alignItems: "flex-start",
-  },
-  ViewAll: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 25,
-  },
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  cardWrapper: {
-    width: "48%",
-    aspectRatio: 1,
-    marginBottom: 10,
-  },
   card: {
+    alignItems: "stretch",
+    width: 300,
+    marginVertical: 10,
+    marginHorizontal: 10,
     borderRadius: 10,
-    overflow: "hidden",
-    backgroundColor: "#fff",
-    elevation: 3,
-  },
-  cardImage: {
-    width: "100%",
-    height: "70%",
-  },
-  cardTitle: {
-    marginTop: 5,
-    fontSize: 14,
-    fontWeight: "bold",
-    textAlign: "center",
+    backgroundColor: MyColors.white,
+    elevation: 10,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: MyColors.white,
+    borderRadius: 10,
+    elevation: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  input: {
+    width: "100%",
+    padding: 10,
+    borderWidth: 1,
+    borderColor: MyColors.black,
+    borderRadius: 5,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  button: {
+    flex: 1,
+    marginHorizontal: 5,
   },
 })

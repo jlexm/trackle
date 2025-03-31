@@ -1,7 +1,15 @@
 import { useState } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useLocalSearchParams } from "expo-router"
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Platform,
+  Alert,
+} from "react-native"
 import MyText from "../atoms/my-text"
-import { View, StyleSheet, ScrollView, Image, Platform } from "react-native"
 import MyColors from "../atoms/my-colors"
 import MyButton from "../atoms/my-button"
 import MyInputForm from "../atoms/my-input-form"
@@ -15,6 +23,7 @@ import { collection, addDoc } from "firebase/firestore"
 import { router } from "expo-router"
 
 export default function CreateTurtleScreen() {
+  const { compoundID } = useLocalSearchParams()
   const [length, setLength] = useState("")
   const [weight, setWeight] = useState("")
   const [location, setLocation] = useState("")
@@ -24,8 +33,15 @@ export default function CreateTurtleScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false)
 
   const auth = getAuth()
-
   const [isSaving, setIsSaving] = useState(false)
+
+  if (!compoundID) {
+    Alert.alert(
+      "Error",
+      "No compound found. Please go back and select a compound."
+    )
+    return null
+  }
 
   const handlePickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -107,6 +123,7 @@ export default function CreateTurtleScreen() {
 
       await addDoc(collection(db, "turtles"), {
         userId: user.uid,
+        compoundID,
         length: Number(length),
         weight: Number(weight),
         location,
@@ -142,7 +159,10 @@ export default function CreateTurtleScreen() {
       >
         <View style={{ paddingTop: 60 }}>
           <MyText textType="title" textColor="black">
-            Add Turtle
+            Add Turtle to Compound
+          </MyText>
+          <MyText textType="body" textColor="gray" style={{ marginTop: 5 }}>
+            Compound ID: {compoundID}
           </MyText>
         </View>
 
@@ -224,11 +244,10 @@ export default function CreateTurtleScreen() {
             height={50}
             onChange={setLocation}
           />
-
           <View style={styles.dropdownContainer}>
             <Picker
               selectedValue={status}
-              onValueChange={(itemValue) => setStatus(itemValue)}
+              onValueChange={setStatus}
               style={styles.picker}
               mode="dropdown"
             >
@@ -247,7 +266,7 @@ export default function CreateTurtleScreen() {
 
         <MyButton
           onPress={handleSaveTurtle}
-          buttonName={isSaving ? "SAVING..." : "SAVE"}
+          buttonName={isSaving ? "CREATING..." : "CREATE"}
           buttonColor={isSaving ? MyColors.dark : MyColors.green}
           fontColor={MyColors.white}
           icon={isSaving ? "progress-clock" : "content-save"}

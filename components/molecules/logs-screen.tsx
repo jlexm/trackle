@@ -1,31 +1,21 @@
 import { useEffect, useState } from "react"
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from "react-native"
+import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native"
 import MyColors from "../atoms/my-colors"
 import MyText from "../atoms/my-text"
 import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { ActivityIndicator, Avatar, Card, IconButton } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  doc,
-} from "firebase/firestore"
-import { db } from "../../FirebaseConfig"
 import { useAuth } from "../auth/auth-context"
+import { fetchTurtles } from "@/services/turtles-services/fetchTurtles"
+import { fetchCompoundId } from "@/services/compound-services/fetchCompoundID"
+import { deleteTurtle } from "@/services/turtles-services/deleteTurtles"
 
 export default function LogsScreen() {
   const router = useRouter()
   const { user } = useAuth()
+  const [compoundId, setCompoundId] = useState<string | null>(null)
+  const [isCompoundLoaded, setIsCompoundLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [turtles, setTurtles] = useState<
     {
@@ -38,65 +28,47 @@ export default function LogsScreen() {
   >([])
 
   useEffect(() => {
-    fetchTurtles()
-  }, [])
-
-  const fetchTurtles = async () => {
     if (!user) return
-    setIsLoading(true)
-    try {
-      const turtlesRef = collection(db, "turtles")
-      const q = query(turtlesRef, where("userId", "==", user.uid))
-      const querySnapshot = await getDocs(q)
 
-      const turtleList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as typeof turtles
+    const unsubscribeCompound = fetchCompoundId(user.uid, (id) => {
+      setCompoundId(id)
+      setIsCompoundLoaded(true)
+    })
 
-      setTurtles(turtleList)
-    } catch (error) {
-      console.error("Error fetching turtles:", error)
+    return () => {
+      if (unsubscribeCompound) unsubscribeCompound()
     }
-    setIsLoading(false)
-  }
+  }, [user])
 
-  const deleteTurtle = async (id: string) => {
-    setTimeout(() => {
-      Alert.alert(
-        "Delete Turtle",
-        "Are you sure you want to delete this turtle?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-          {
-            text: "Delete",
-            style: "destructive",
-            onPress: async () => {
-              try {
-                await deleteDoc(doc(db, "turtles", id))
-                setTurtles((prevTurtles) =>
-                  prevTurtles.filter((turtle) => turtle.id !== id)
-                )
-              } catch (error) {
-                console.error("Error deleting turtle:", error)
-              }
-            },
-          },
-        ]
-      )
-    }, 100)
-  }
+  useEffect(() => {
+    if (!user || !compoundId || !isCompoundLoaded) return
+
+    const unsubscribeTurtles = fetchTurtles(
+      user.uid,
+      compoundId,
+      setTurtles,
+      setIsLoading
+    )
+
+    return () => {
+      if (unsubscribeTurtles) unsubscribeTurtles()
+    }
+  }, [user, compoundId, isCompoundLoaded])
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "Unknown Date"
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "Invalid Date"
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     }).format(date)
+  }
+
+  const handleDeleteTurtle = async (turtleId: string) => {
+    await deleteTurtle(turtleId, setTurtles)
+    setTurtles((prev) => prev.filter((turtle) => turtle.id !== turtleId))
   }
 
   return (
@@ -133,6 +105,7 @@ export default function LogsScreen() {
               <Feather name="search" size={24} color={MyColors.black} />
             </TouchableOpacity>
           </View>
+
           <MyText
             textType="title"
             textColor={MyColors.black}
@@ -140,11 +113,9 @@ export default function LogsScreen() {
           >
             {turtles.length}
           </MyText>
+
           <Card
-            style={[
-              styles.card,
-              { alignItems: "center", justifyContent: "center", padding: 20 },
-            ]}
+            style={styles.addCard}
             onPress={() => router.push("/create-turtle-nav")}
           >
             <IconButton icon="plus" size={40} />
@@ -152,51 +123,61 @@ export default function LogsScreen() {
               Add Turtle
             </MyText>
           </Card>
-          {turtles.map((turtle) => (
-            <Card
-              key={turtle.id}
-              style={styles.card}
-              onPress={() =>
-                router.push({
-                  pathname: "/turtle/[id]",
-                  params: { id: turtle.id },
-                })
-              }
-            >
-              <Card.Title
-                title={`Rescued Turtle #${turtle.id}`}
-                subtitle={`Status: ${turtle.status}`}
-                left={(props) => (
-                  <Avatar.Image
-                    {...props}
-                    source={{ uri: turtle.imageUrl }}
-                    size={50}
-                  />
-                )}
-                right={(props) => (
-                  <IconButton
-                    {...props}
-                    icon="delete"
-                    onPress={() => deleteTurtle(turtle.id)}
-                  />
-                )}
-              />
-              <Card.Content>
-                <MyText textType="body" textColor={MyColors.black}>
-                  <MyText textType="bodyBold" textColor={MyColors.black}>
-                    Date Rescued:{" "}
+
+          {turtles.length === 0 ? (
+            <MyText textType="body" textColor={MyColors.black}>
+              No rescued turtles found.
+            </MyText>
+          ) : (
+            turtles.map((turtle) => (
+              <Card
+                key={turtle.id}
+                style={styles.card}
+                onPress={() =>
+                  router.push({
+                    pathname: "/turtle/[id]",
+                    params: { id: turtle.id },
+                  })
+                }
+              >
+                <Card.Title
+                  title={`Rescued Turtle #${turtle.id}`}
+                  subtitle={`Status: ${turtle.status}`}
+                  left={(props) => (
+                    <Avatar.Image
+                      {...props}
+                      source={{
+                        uri:
+                          turtle.imageUrl || "https://via.placeholder.com/50",
+                      }}
+                      size={50}
+                    />
+                  )}
+                  right={(props) => (
+                    <IconButton
+                      {...props}
+                      icon="delete"
+                      onPress={() => handleDeleteTurtle(turtle.id)}
+                    />
+                  )}
+                />
+                <Card.Content>
+                  <MyText textType="body" textColor={MyColors.black}>
+                    <MyText textType="bodyBold" textColor={MyColors.black}>
+                      Date Rescued:{" "}
+                    </MyText>
+                    {formatDate(turtle.dateRescued)}
                   </MyText>
-                  {formatDate(turtle.dateRescued)}
-                </MyText>
-                <MyText textType="body" textColor={MyColors.black}>
-                  <MyText textType="bodyBold" textColor={MyColors.black}>
-                    Location:
-                  </MyText>{" "}
-                  {turtle.location}
-                </MyText>
-              </Card.Content>
-            </Card>
-          ))}
+                  <MyText textType="body" textColor={MyColors.black}>
+                    <MyText textType="bodyBold" textColor={MyColors.black}>
+                      Location:
+                    </MyText>{" "}
+                    {turtle.location}
+                  </MyText>
+                </Card.Content>
+              </Card>
+            ))
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -235,14 +216,26 @@ const styles = StyleSheet.create({
     fontSize: 128,
     marginBottom: 10,
   },
-  card: {
-    alignItems: "stretch",
+  addCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
     width: 300,
     marginVertical: 10,
-    marginHorizontal: 10,
+    backgroundColor: MyColors.white,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  card: {
+    width: 300,
+    marginVertical: 10,
     borderRadius: 10,
     backgroundColor: MyColors.white,
-    elevation: 10,
+    elevation: 5,
   },
-  loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 })

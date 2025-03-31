@@ -20,7 +20,7 @@ export default function SettingsScreen() {
               color={MyColors.black}
             />
             <MyText textType="body" style={styles.settingText}>
-              Compound Name
+              Compounds
             </MyText>
           </TouchableOpacity>
 
