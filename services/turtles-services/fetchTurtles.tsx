@@ -1,4 +1,4 @@
-import { doc, onSnapshot } from "firebase/firestore"
+import { collection, onSnapshot, query, where } from "firebase/firestore"
 import { db } from "../../FirebaseConfig"
 
 export const fetchTurtles = (
@@ -11,21 +11,13 @@ export const fetchTurtles = (
     return
   }
 
-  const compoundRef = doc(db, "compounds", compoundId)
+  const turtlesRef = collection(db, "turtles")
+  const q = query(turtlesRef, where("compoundID", "==", compoundId))
 
   const unsubscribe = onSnapshot(
-    compoundRef,
+    q,
     (docSnapshot) => {
-      if (docSnapshot.exists()) {
-        const compoundData = docSnapshot.data()
-
-        const turtlesList = compoundData.turtles || []
-
-        setTurtles(turtlesList)
-      } else {
-        setTurtles([])
-      }
-
+      setTurtles(docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
       setIsLoading(false)
     },
     (error) => {}

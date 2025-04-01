@@ -10,12 +10,12 @@ import { useAuth } from "../auth/auth-context"
 import { fetchTurtles } from "@/services/turtles-services/fetchTurtles"
 import { fetchCompoundId } from "@/services/compound-services/fetchCompoundID"
 import { deleteTurtle } from "@/services/turtles-services/deleteTurtles"
+import { useGlobalContext } from "@/services/global-services/global-context"
 
 export default function LogsScreen() {
   const router = useRouter()
   const { user } = useAuth()
-  const [compoundId, setCompoundId] = useState<string | null>(null)
-  const [isCompoundLoaded, setIsCompoundLoaded] = useState(false)
+  const { currentCompoundID: compoundId } = useGlobalContext()
   const [isLoading, setIsLoading] = useState(true)
   const [turtles, setTurtles] = useState<
     {
@@ -28,20 +28,7 @@ export default function LogsScreen() {
   >([])
 
   useEffect(() => {
-    if (!user) return
-
-    const unsubscribeCompound = fetchCompoundId(user.uid, (id) => {
-      setCompoundId(id)
-      setIsCompoundLoaded(true)
-    })
-
-    return () => {
-      if (unsubscribeCompound) unsubscribeCompound()
-    }
-  }, [user])
-
-  useEffect(() => {
-    if (!user || !compoundId || !isCompoundLoaded) return
+    if (!user || !compoundId) return
 
     const unsubscribeTurtles = fetchTurtles(
       user.uid,
@@ -53,7 +40,7 @@ export default function LogsScreen() {
     return () => {
       if (unsubscribeTurtles) unsubscribeTurtles()
     }
-  }, [user, compoundId, isCompoundLoaded])
+  }, [user, compoundId])
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Unknown Date"

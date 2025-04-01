@@ -17,33 +17,19 @@ import { router } from "expo-router"
 import { useAuth } from "../auth/auth-context"
 import { fetchCompoundIdAndTurtles } from "@/services/compound-services/fetchCompoundandTurtles"
 import { fetchTurtles } from "@/services/turtles-services/fetchTurtles"
+import { useGlobalContext } from "@/services/global-services/global-context"
 
 export default function CompoundScreen() {
+  const { currentCompoundID: compoundId } = useGlobalContext()
   const { user } = useAuth()
   const { width } = useMemo(() => Dimensions.get("window"), [])
   const pagerRef = useRef<PagerView>(null)
 
   const [currentPage, setCurrentPage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const [compoundId, setCompoundId] = useState<string | null>(null)
   const [turtles, setTurtles] = useState<{ id: string; imageUrl?: string }[]>(
     []
   )
-  useEffect(() => {
-    if (!user) return
-
-    const unsubscribeCompound = fetchCompoundIdAndTurtles(
-      user.uid,
-      setCompoundId,
-      setTurtles,
-      setIsLoading
-    )
-    return () => {
-      if (unsubscribeCompound) {
-        unsubscribeCompound()
-      }
-    }
-  }, [user])
 
   useEffect(() => {
     if (!user || !compoundId) return
@@ -151,9 +137,9 @@ export default function CompoundScreen() {
           </PagerView>
 
           <View style={styles.pagination}>
-            {turtles.map((_, index) => (
+            {turtles.map((turtle, index) => (
               <View
-                key={index}
+                key={turtle.id}
                 style={[
                   styles.dot,
                   {

@@ -7,12 +7,9 @@ import MyColors from "@/components/atoms/my-colors"
 import { useAuth } from "@/components/auth/auth-context"
 
 export default function Index() {
-  const { role } = useAuth()
-  const isManagement = role === "management"
-
   return (
     <SafeAreaView style={styles.container}>
-      {isManagement ? <CompoundScreen /> : <HomeScreen />}
+      <HomeScreen />
     </SafeAreaView>
   )
 }

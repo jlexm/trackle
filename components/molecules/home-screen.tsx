@@ -22,13 +22,16 @@ import {
   updateDoc,
   arrayUnion,
   getDoc,
+  or,
 } from "firebase/firestore"
 import { useAuth } from "../auth/auth-context"
 import { db } from "@/FirebaseConfig"
+import { useGlobalContext } from "@/services/global-services/global-context"
 
 export default function HomeScreen() {
   const router = useRouter()
   const { user } = useAuth()
+  const { setCurrentCompoundID } = useGlobalContext()
 
   const [isLoading, setIsLoading] = useState(true)
   const [compounds, setCompounds] = useState<{ id: string; name: string }[]>([])
@@ -43,7 +46,10 @@ export default function HomeScreen() {
       try {
         const q = query(
           collection(db, "compounds"),
-          where("members", "array-contains", user.uid)
+          or(
+            where("userId", "==", user.uid),
+            where("members", "array-contains", user.uid)
+          )
         )
         const querySnapshot = await getDocs(q)
         const compoundsList = querySnapshot.docs.map((doc) => ({
@@ -140,10 +146,8 @@ export default function HomeScreen() {
                 key={compound.id}
                 style={styles.card}
                 onPress={() => {
-                  router.push({
-                    pathname: "/compound/[id]",
-                    params: { id: compound.id },
-                  })
+                  setCurrentCompoundID(compound.id)
+                  router.push("/compound-nav")
                 }}
               >
                 <Card.Title title={compound.name} />
