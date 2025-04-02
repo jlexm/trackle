@@ -9,6 +9,7 @@ export default function RootLayout() {
       <GlobalProvider>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen
             name="search-nav"
             options={{

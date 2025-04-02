@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useLocalSearchParams } from "expo-router"
 import {
   View,
   StyleSheet,
@@ -21,9 +20,10 @@ import * as ImagePicker from "expo-image-picker"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { collection, addDoc } from "firebase/firestore"
 import { router } from "expo-router"
+import { useGlobalContext } from "@/services/global-services/global-context"
 
 export default function CreateTurtleScreen() {
-  const { compoundID } = useLocalSearchParams()
+  const { currentCompoundID: compoundId } = useGlobalContext()
   const [length, setLength] = useState("")
   const [weight, setWeight] = useState("")
   const [location, setLocation] = useState("")
@@ -35,7 +35,7 @@ export default function CreateTurtleScreen() {
   const auth = getAuth()
   const [isSaving, setIsSaving] = useState(false)
 
-  if (!compoundID) {
+  if (!compoundId) {
     Alert.alert(
       "Error",
       "No compound found. Please go back and select a compound."
@@ -123,7 +123,7 @@ export default function CreateTurtleScreen() {
 
       await addDoc(collection(db, "turtles"), {
         userId: user.uid,
-        compoundID,
+        compoundId,
         length: Number(length),
         weight: Number(weight),
         location,
@@ -159,10 +159,7 @@ export default function CreateTurtleScreen() {
       >
         <View style={{ paddingTop: 60 }}>
           <MyText textType="title" textColor="black">
-            Add Turtle to Compound
-          </MyText>
-          <MyText textType="body" textColor="gray" style={{ marginTop: 5 }}>
-            Compound ID: {compoundID}
+            Add Turtle
           </MyText>
         </View>
 

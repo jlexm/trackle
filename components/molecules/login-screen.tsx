@@ -33,7 +33,7 @@ export default function LoginScreen() {
     setIsLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      router.replace("/(tabs)")
+      router.replace("/")
     } catch (error: any) {
       showSnackbar("Sign in failed: " + error.message)
     } finally {

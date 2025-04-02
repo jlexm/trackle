@@ -23,6 +23,7 @@ type MyInputFormProps = {
   secureTextEntry?: boolean
   onChange?: (text: string) => void
   value?: string
+  editable?: boolean
   keyboardType?: KeyboardTypeOptions
 }
 
@@ -38,6 +39,7 @@ export default function MyInputForm({
   secureTextEntry = false,
   onChange,
   value,
+  editable = true,
   keyboardType = "default",
 }: MyInputFormProps) {
   const [fontsLoaded] = useFonts({ Ubuntu_300Light })
@@ -80,6 +82,7 @@ export default function MyInputForm({
         onChangeText={onChange}
         value={value}
         keyboardType={keyboardType}
+        editable={editable}
       />
       {secureTextEntry && (
         <TouchableOpacity

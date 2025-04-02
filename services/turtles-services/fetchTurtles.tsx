@@ -12,7 +12,7 @@ export const fetchTurtles = (
   }
 
   const turtlesRef = collection(db, "turtles")
-  const q = query(turtlesRef, where("compoundID", "==", compoundId))
+  const q = query(turtlesRef, where("compoundId", "==", compoundId))
 
   const unsubscribe = onSnapshot(
     q,

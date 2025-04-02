@@ -8,7 +8,6 @@ import { ActivityIndicator, Avatar, Card, IconButton } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "../auth/auth-context"
 import { fetchTurtles } from "@/services/turtles-services/fetchTurtles"
-import { fetchCompoundId } from "@/services/compound-services/fetchCompoundID"
 import { deleteTurtle } from "@/services/turtles-services/deleteTurtles"
 import { useGlobalContext } from "@/services/global-services/global-context"
 
@@ -16,6 +15,7 @@ export default function LogsScreen() {
   const router = useRouter()
   const { user } = useAuth()
   const { currentCompoundID: compoundId } = useGlobalContext()
+  const { setCurrentCompoundID } = useGlobalContext()
   const [isLoading, setIsLoading] = useState(true)
   const [turtles, setTurtles] = useState<
     {
@@ -103,7 +103,10 @@ export default function LogsScreen() {
 
           <Card
             style={styles.addCard}
-            onPress={() => router.push("/create-turtle-nav")}
+            onPress={() => {
+              setCurrentCompoundID(compoundId)
+              router.push("/create-turtle-nav")
+            }}
           >
             <IconButton icon="plus" size={40} />
             <MyText textType="body" textColor={MyColors.black}>

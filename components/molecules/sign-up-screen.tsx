@@ -31,7 +31,7 @@ export default function SignUpScreen() {
       if (role === "management") {
         router.replace("/create-compound-nav")
       } else {
-        router.replace("/(tabs)")
+        router.replace("/")
       }
     } catch (error: any) {
       showSnackbar(error.message || "Sign up failed.")
@@ -81,7 +81,7 @@ export default function SignUpScreen() {
               style={styles.picker}
               mode="dropdown"
             >
-              <Picker.Item label="Management" value="management" />
+              <Picker.Item label="Manager" value="management" />
               <Picker.Item label="Caretaker" value="caretaker" />
             </Picker>
           </View>

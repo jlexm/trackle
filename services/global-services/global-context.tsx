@@ -5,10 +5,9 @@ type GlobalContextType = {
   setCurrentCompoundID: React.Dispatch<React.SetStateAction<string | null>>
 }
 
-// ✅ Provide a default value to avoid 'undefined' errors
 const GlobalContext = createContext<GlobalContextType>({
   currentCompoundID: null,
-  setCurrentCompoundID: () => {}, // No-op function
+  setCurrentCompoundID: () => {},
 })
 
 export function GlobalProvider({ children }: { children: React.ReactNode }) {

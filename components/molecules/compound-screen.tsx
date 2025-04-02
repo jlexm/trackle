@@ -15,7 +15,6 @@ import { Feather } from "@expo/vector-icons"
 import PagerView from "react-native-pager-view"
 import { router } from "expo-router"
 import { useAuth } from "../auth/auth-context"
-import { fetchCompoundIdAndTurtles } from "@/services/compound-services/fetchCompoundandTurtles"
 import { fetchTurtles } from "@/services/turtles-services/fetchTurtles"
 import { useGlobalContext } from "@/services/global-services/global-context"
 
@@ -24,7 +23,6 @@ export default function CompoundScreen() {
   const { user } = useAuth()
   const { width } = useMemo(() => Dimensions.get("window"), [])
   const pagerRef = useRef<PagerView>(null)
-
   const [currentPage, setCurrentPage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [turtles, setTurtles] = useState<{ id: string; imageUrl?: string }[]>(
@@ -214,7 +212,6 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: MyColors.white,
-    marginTop: 50,
   },
   scrollContainer: {
     flex: 1,

@@ -111,9 +111,17 @@ export default function HomeScreen() {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
+          <View>
+            <MyText textType="subtitle" textColor={MyColors.black}>
+              Welcome,{" "}
+              <MyText textType="caption" textColor={MyColors.black}>
+                {user?.email || "User"}
+              </MyText>
+            </MyText>
+          </View>
           <View style={styles.header}>
             <MyText
-              textType="subtitle"
+              textType="title"
               textColor={MyColors.black}
               style={styles.title}
             >
@@ -124,7 +132,7 @@ export default function HomeScreen() {
               onPress={() => setIsModalVisible(true)}
             >
               <MyText
-                textType="body"
+                textType="caption"
                 textColor={MyColors.black}
                 style={styles.searchText}
               >
@@ -147,7 +155,7 @@ export default function HomeScreen() {
                 style={styles.card}
                 onPress={() => {
                   setCurrentCompoundID(compound.id)
-                  router.push("/compound-nav")
+                  router.push("/(tabs)")
                 }}
               >
                 <Card.Title title={compound.name} />
@@ -214,13 +222,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
+    flexGrow: 1,
+    justifyContent: "flex-start",
     alignItems: "center",
-    paddingHorizontal: 25,
-    paddingBottom: 20,
+    paddingTop: 75,
   },
   header: {
     flexDirection: "row",
     gap: 50,
+    paddingTop: 50,
   },
   title: {
     fontSize: 20,
@@ -268,6 +278,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     marginBottom: 10,
+    textAlign: "center",
   },
   input: {
     width: "100%",

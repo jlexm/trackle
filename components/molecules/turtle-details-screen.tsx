@@ -16,9 +16,11 @@ import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { db } from "../../FirebaseConfig"
 import MyInputForm from "../atoms/my-input-form"
 import { Picker } from "@react-native-picker/picker"
+import { useAuth } from "@/components/auth/auth-context"
 
 export default function TurtleDetailsScreen() {
   const { id } = useLocalSearchParams()
+  const { user, role } = useAuth()
 
   const [turtle, setTurtle] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -145,6 +147,7 @@ export default function TurtleDetailsScreen() {
             height={50}
             value={length}
             onChange={setLength}
+            editable={role !== "caretaker"}
           />
           <MyText textType="bodyBold" textColor={MyColors.black}>
             Weight
@@ -156,6 +159,7 @@ export default function TurtleDetailsScreen() {
             height={50}
             value={weight}
             onChange={setWeight}
+            editable={role !== "caretaker"}
           />
           <MyText textType="bodyBold" textColor={MyColors.black}>
             Location
@@ -166,6 +170,7 @@ export default function TurtleDetailsScreen() {
             height={50}
             value={location}
             onChange={setLocation}
+            editable={role !== "caretaker"}
           />
           <MyText textType="bodyBold" textColor={MyColors.black}>
             Status
@@ -176,6 +181,7 @@ export default function TurtleDetailsScreen() {
               onValueChange={(itemValue) => setStatus(itemValue)}
               style={styles.picker}
               mode="dropdown"
+              enabled={role !== "caretaker"}
             >
               <Picker.Item label="Healthy" value="Healthy" />
               <Picker.Item label="Injured" value="Injured" />
@@ -196,7 +202,7 @@ export default function TurtleDetailsScreen() {
             buttonColor={MyColors.dark}
             icon="update"
             onPress={handleSaveChanges}
-            disabled={isSaving}
+            disabled={isSaving || role === "caretaker"}
           />
 
           <MyButton
@@ -208,6 +214,7 @@ export default function TurtleDetailsScreen() {
             buttonColor={MyColors.red}
             icon="delete"
             onPress={() => console.log("Delete!")}
+            disabled={role === "caretaker"}
           />
         </View>
       </ScrollView>
