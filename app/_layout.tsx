@@ -36,6 +36,13 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="accounts-nav"
+            options={{
+              title: "",
+              headerTransparent: true,
+            }}
+          />
+          <Stack.Screen
             name="turtle/[id]"
             options={{ title: "", headerTransparent: true }}
           />

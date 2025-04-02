@@ -11,7 +11,7 @@ import MyColors from "../atoms/my-colors"
 import MyText from "../atoms/my-text"
 import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
-import { ActivityIndicator, Card, Button } from "react-native-paper"
+import { ActivityIndicator, Card, Button, IconButton } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
 import {
   collection,
@@ -30,7 +30,7 @@ import { useGlobalContext } from "@/services/global-services/global-context"
 
 export default function HomeScreen() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const { setCurrentCompoundID } = useGlobalContext()
 
   const [isLoading, setIsLoading] = useState(true)
@@ -69,12 +69,10 @@ export default function HomeScreen() {
 
   const joinCompound = async () => {
     if (!compoundCode.trim()) {
-      console.log("Please enter a compound code")
       return
     }
 
     if (!user) {
-      console.log("User not authenticated")
       return
     }
 
@@ -83,17 +81,15 @@ export default function HomeScreen() {
       const compoundSnap = await getDoc(compoundRef)
 
       if (!compoundSnap.exists()) {
-        console.log("Compound not found")
         return
       }
 
       await updateDoc(compoundRef, {
         members: arrayUnion(user.uid),
       })
-
-      console.log(`User ${user.uid} joined compound ${compoundCode}`)
       setIsModalVisible(false)
       setCompoundCode("")
+      router.replace("/(tabs)")
     } catch (error) {
       console.error("Error joining compound:", error)
     }
@@ -127,19 +123,21 @@ export default function HomeScreen() {
             >
               My Compounds
             </MyText>
-            <TouchableOpacity
-              style={styles.searchButton}
-              onPress={() => setIsModalVisible(true)}
-            >
-              <MyText
-                textType="caption"
-                textColor={MyColors.black}
-                style={styles.searchText}
+            {role !== "management" && (
+              <TouchableOpacity
+                style={styles.searchButton}
+                onPress={() => setIsModalVisible(true)}
               >
-                Join Compound
-              </MyText>
-              <Feather name="plus" size={24} color={MyColors.black} />
-            </TouchableOpacity>
+                <MyText
+                  textType="caption"
+                  textColor={MyColors.black}
+                  style={styles.searchText}
+                >
+                  Join Compound
+                </MyText>
+                <Feather name="plus" size={24} color={MyColors.black} />
+              </TouchableOpacity>
+            )}
           </View>
           <MyText
             textType="title"
@@ -148,6 +146,21 @@ export default function HomeScreen() {
           >
             {compounds.length}
           </MyText>
+          {role === "management" && (
+            <Card
+              style={styles.addCard}
+              onPress={() => {
+                router.push("/create-compound-nav")
+              }}
+            >
+              <View style={styles.addCardContent}>
+                <IconButton icon="plus" size={40} />
+                <MyText textType="body" textColor={MyColors.black}>
+                  Add Compound
+                </MyText>
+              </View>
+            </Card>
+          )}
           {compounds.length > 0 ? (
             compounds.map((compound) => (
               <Card
@@ -163,7 +176,7 @@ export default function HomeScreen() {
             ))
           ) : (
             <MyText textType="body" textColor={MyColors.black}>
-              No compounds joined yet.
+              No compounds joined yet. Ask for a compound code to join.
             </MyText>
           )}
         </ScrollView>
@@ -255,6 +268,26 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: MyColors.white,
     elevation: 10,
+  },
+  addCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 100,
+    width: "75%",
+    marginVertical: 10,
+    backgroundColor: MyColors.primary,
+    borderWidth: 1,
+    borderColor: MyColors.black,
+    borderRadius: 10,
+    elevation: 5,
+    paddingVertical: 10,
+  },
+  addCardContent: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    paddingVertical: 10,
   },
   loaderContainer: {
     flex: 1,

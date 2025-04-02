@@ -7,13 +7,16 @@ import { router } from "expo-router"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function SettingsScreen() {
-  const { logout } = useAuth()
+  const { logout, role } = useAuth()
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
       <View style={styles.container}>
         <View>
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => router.push("/")}
+          >
             <MaterialCommunityIcons
               name="office-building"
               size={24}
@@ -24,16 +27,21 @@ export default function SettingsScreen() {
             </MyText>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
-            <MaterialCommunityIcons
-              name="account-supervisor"
-              size={24}
-              color={MyColors.black}
-            />
-            <MyText textType="body" style={styles.settingText}>
-              Accounts
-            </MyText>
-          </TouchableOpacity>
+          {role !== "caretaker" && (
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={() => router.push("/accounts-nav")}
+            >
+              <MaterialCommunityIcons
+                name="account-supervisor"
+                size={24}
+                color={MyColors.black}
+              />
+              <MyText textType="body" style={styles.settingText}>
+                Accounts
+              </MyText>
+            </TouchableOpacity>
+          )}
         </View>
         <TouchableOpacity
           onPress={() => {
