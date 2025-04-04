@@ -8,7 +8,6 @@ import { ActivityIndicator, Avatar, Card, IconButton } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "../auth/auth-context"
 import { fetchTurtles } from "@/services/turtles-services/fetchTurtles"
-import { deleteTurtle } from "@/services/turtles-services/deleteTurtles"
 import { useGlobalContext } from "@/services/global-services/global-context"
 
 export default function LogsScreen() {
@@ -51,11 +50,6 @@ export default function LogsScreen() {
       month: "long",
       day: "numeric",
     }).format(date)
-  }
-
-  const handleDeleteTurtle = async (turtleId: string) => {
-    await deleteTurtle(turtleId, setTurtles)
-    setTurtles((prev) => prev.filter((turtle) => turtle.id !== turtleId))
   }
 
   return (
@@ -141,13 +135,6 @@ export default function LogsScreen() {
                           turtle.imageUrl || "https://via.placeholder.com/50",
                       }}
                       size={50}
-                    />
-                  )}
-                  right={(props) => (
-                    <IconButton
-                      {...props}
-                      icon="delete"
-                      onPress={() => handleDeleteTurtle(turtle.id)}
                     />
                   )}
                 />

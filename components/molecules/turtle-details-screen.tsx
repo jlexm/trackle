@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native"
-import { useLocalSearchParams } from "expo-router"
+import { router, useLocalSearchParams } from "expo-router"
 import { Card, Switch, Text } from "react-native-paper"
 import MyText from "@/components/atoms/my-text"
 import MyColors from "@/components/atoms/my-colors"
@@ -16,6 +16,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { db } from "../../FirebaseConfig"
 import MyInputForm from "../atoms/my-input-form"
 import { Picker } from "@react-native-picker/picker"
+import { deleteTurtle } from "@/services/turtles-services/deleteTurtles"
 import { useAuth } from "@/components/auth/auth-context"
 
 export default function TurtleDetailsScreen() {
@@ -213,7 +214,12 @@ export default function TurtleDetailsScreen() {
             fontColor={MyColors.white}
             buttonColor={MyColors.red}
             icon="delete"
-            onPress={() => console.log("Delete!")}
+            onPress={() =>
+              deleteTurtle(id.toString(), () => {
+                router.back()
+                return []
+              })
+            }
             disabled={role === "caretaker"}
           />
         </View>
