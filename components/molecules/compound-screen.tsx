@@ -7,6 +7,7 @@ import {
   Dimensions,
   SafeAreaView,
   ScrollView,
+  Alert,
 } from "react-native"
 import { ActivityIndicator, Card, TouchableRipple } from "react-native-paper"
 import MyColors from "../atoms/my-colors"
@@ -49,26 +50,31 @@ export default function CompoundScreen() {
       title: "Green Turtle",
       image:
         "https://media.australian.museum/media/dd/images/1600px-Green_Turtle_Chelonia_mydas_6133097542.width-1200.c1df197.jpg",
+      desc: "The green sea turtle, also known as the green turtle, black turtle or Pacific green turtle, is a species of large sea turtle of the family Cheloniidae. It is the only species in the genus Chelonia.",
     },
     {
       title: "Hawksbill Turtle",
       image:
         "https://www.fisheries.noaa.gov/s3//styles/full_width/s3/dam-migration/hawksbill_sea_turtle.jpg?itok=cxzcge8K",
+      desc: "The hawksbill sea turtle is a critically endangered species of sea turtle in the family Cheloniidae. It is the only extant species in the genus Eretmochelys.",
     },
     {
       title: "Olive Ridley Turtle",
       image:
         "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTmYR1WtV9uhDlhowwqK-TOUI0tX9jlhVWN7YO9ZaBemHkdskICPaVlTr1yBqPxrpLdJtwssyNoUjRQdQOe34LJBA",
+      desc: "The olive ridley sea turtle, also known as the Pacific ridley turtle, is a species of sea turtle in the family Cheloniidae. It is the second smallest and most abundant species of sea turtle.",
     },
     {
       title: "Leatherback Turtle",
       image:
         "https://www.boem.gov/sites/default/files/styles/max_width_600px/public/images/leatherback_turtle_photo_credit_noaa_fisheries.jpg?itok=i7yPTVpw",
+      desc: "The leatherback sea turtle is the largest species of sea turtle and the only extant species in the genus Dermochelys. It is the only living representative of the family Dermochelyidae.",
     },
     {
       title: "Loggerhead Turtle",
       image:
         "https://www.2fla.com/sites/default/files/loggerhead-001-adolfo-felix-BXN16VVFEio-unsplash.jpg",
+      desc: "The loggerhead sea turtle is a species of oceanic turtle in the family Cheloniidae. It is the only extant species in the genus Caretta.",
     },
   ]
   return (
@@ -179,7 +185,14 @@ export default function CompoundScreen() {
             {turtleTypes.map((item, index) => (
               <TouchableRipple
                 key={index}
-                onPress={() => alert(item.title)}
+                onPress={() =>
+                  Alert.alert(
+                    item.title,
+                    item.desc,
+                    [{ text: "OK", style: "default" }],
+                    { cancelable: true }
+                  )
+                }
                 borderless
                 rippleColor="rgba(0, 0, 0, 0.2)"
                 style={styles.cardWrapper}
