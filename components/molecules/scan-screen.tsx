@@ -1,67 +1,80 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { View, StyleSheet, Text } from "react-native"
 import { Camera, CameraView } from "expo-camera"
-import { useRouter } from "expo-router"
+import { useRouter, useFocusEffect } from "expo-router"
 import MyColors from "../atoms/my-colors"
 import MyButton from "../atoms/my-button"
 import MyText from "../atoms/my-text"
 
 export default function ScanScreen() {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null)
-  const [scanning, setScanning] = useState(true)
+  const [hasCameraPermission, setHasCameraPermission] = useState<
+    boolean | null
+  >(null)
+  const [isScanning, setIsScanning] = useState(true)
+  const [isScreenFocused, setIsScreenFocused] = useState(true)
   const router = useRouter()
 
+  // Ask for camera permission on mount
   useEffect(() => {
-    ;(async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync()
-      setHasPermission(status === "granted")
-    })()
+    requestCameraAccess()
   }, [])
 
-  const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
-    setScanning(false)
+  const requestCameraAccess = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync()
+    setHasCameraPermission(status === "granted")
+  }
 
+  // Handle navigation focus/unfocus
+  useFocusEffect(
+    useCallback(() => {
+      setIsScreenFocused(true)
+      return () => setIsScreenFocused(false)
+    }, [])
+  )
+
+  const onBarcodeScanned = ({ data }: { type: string; data: string }) => {
+    setIsScanning(false)
     const turtleId = data.replace("RT-", "")
     router.push({ pathname: "/turtle/[id]", params: { id: turtleId } })
   }
 
-  if (hasPermission === null)
+  if (hasCameraPermission === null) {
     return <Text>Requesting camera permission...</Text>
-  if (!hasPermission) return <Text>No access to camera</Text>
+  }
+
+  if (!hasCameraPermission) {
+    return <Text>No access to camera</Text>
+  }
 
   return (
-    <View style={styles.container}>
-      {scanning && (
+    <View style={styles.screen}>
+      {isScanning && isScreenFocused ? (
         <CameraView
-          onBarcodeScanned={handleBarCodeScanned}
-          barcodeScannerSettings={{
-            barcodeTypes: ["qr", "pdf417"],
-          }}
-          style={styles.camera}
+          onBarcodeScanned={onBarcodeScanned}
+          barcodeScannerSettings={{ barcodeTypes: ["qr", "pdf417"] }}
+          style={styles.cameraView}
         >
-          <View style={styles.overlay}>
+          <View style={styles.cameraOverlay}>
             <MyText textType="title" textColor={MyColors.white}>
               Scan a turtle QR
             </MyText>
-            <View style={styles.scannerFrame}>
-              <View style={[styles.corner, styles.topLeft]} />
-              <View style={[styles.corner, styles.topRight]} />
-              <View style={[styles.corner, styles.bottomLeft]} />
-              <View style={[styles.corner, styles.bottomRight]} />
+            <View style={styles.frameBox}>
+              <View style={[styles.frameCorner, styles.topLeft]} />
+              <View style={[styles.frameCorner, styles.topRight]} />
+              <View style={[styles.frameCorner, styles.bottomLeft]} />
+              <View style={[styles.frameCorner, styles.bottomRight]} />
             </View>
           </View>
         </CameraView>
-      )}
-
-      {!scanning && (
+      ) : (
         <MyButton
           buttonName="SCAN AGAIN"
           buttonColor={MyColors.dark}
           fontColor={MyColors.white}
           width={150}
           height={50}
-          onPress={() => setScanning(true)}
-          style={styles.scanButton}
+          onPress={() => setIsScanning(true)}
+          style={styles.rescanButton}
         />
       )}
     </View>
@@ -69,41 +82,37 @@ export default function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  camera: {
+  cameraView: {
     flex: 1,
     width: "100%",
     height: "100%",
   },
-  overlay: {
+  cameraOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  scannerFrame: {
+  frameBox: {
     marginTop: 20,
     width: 250,
     height: 250,
   },
-  scanButton: {
+  frameCorner: {
+    width: 40,
+    height: 40,
     position: "absolute",
-    bottom: 50,
+    borderColor: "white",
   },
   topLeft: {
     top: 0,
     left: 0,
     borderTopWidth: 4,
     borderLeftWidth: 4,
-  },
-  corner: {
-    width: 40,
-    height: 40,
-    position: "absolute",
-    borderColor: "white",
   },
   topRight: {
     top: 0,
@@ -122,5 +131,9 @@ const styles = StyleSheet.create({
     right: 0,
     borderBottomWidth: 4,
     borderRightWidth: 4,
+  },
+  rescanButton: {
+    position: "absolute",
+    bottom: 50,
   },
 })
