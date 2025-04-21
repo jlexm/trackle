@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Pressable,
+  Alert,
 } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { Text, Switch, IconButton } from "react-native-paper"
@@ -28,6 +29,8 @@ import { Picker } from "@react-native-picker/picker"
 import { deleteTurtle } from "@/services/turtles-services/deleteTurtles"
 import { useAuth } from "@/components/auth/auth-context"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import * as MediaLibrary from "expo-media-library"
+import * as FileSystem from "expo-file-system"
 
 export default function TurtleDetailsScreen() {
   const { id } = useLocalSearchParams()
@@ -149,6 +152,33 @@ export default function TurtleDetailsScreen() {
     }
   }
 
+  const handleSaveQRToGallery = async () => {
+    if (role !== "management") return
+
+    try {
+      const qrUri = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RT-${id}`
+
+      const fileUri = FileSystem.documentDirectory + `qr-${id}.png`
+      const downloadRes = await FileSystem.downloadAsync(qrUri, fileUri)
+
+      const { status } = await MediaLibrary.requestPermissionsAsync()
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Denied",
+          "Cannot save image without permission."
+        )
+        return
+      }
+
+      await MediaLibrary.saveToLibraryAsync(downloadRes.uri)
+
+      Alert.alert("Success", "QR Code has been saved to your gallery.")
+    } catch (error) {
+      console.error("Failed to save QR code:", error)
+      Alert.alert("Error", "Failed to save QR Code.")
+    }
+  }
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -204,12 +234,14 @@ export default function TurtleDetailsScreen() {
 
         <View style={styles.imageContainer}>
           {showQR ? (
-            <Image
-              source={{
-                uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RT-${id}`,
-              }}
-              style={styles.qrImage}
-            />
+            <Pressable onLongPress={handleSaveQRToGallery}>
+              <Image
+                source={{
+                  uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RT-${id}`,
+                }}
+                style={styles.qrImage}
+              />
+            </Pressable>
           ) : (
             <Pressable onLongPress={handleImageUpload}>
               <Image
