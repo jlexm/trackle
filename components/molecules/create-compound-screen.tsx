@@ -47,7 +47,7 @@ export default function CreateCompoundScreen() {
 
       setCompoundName("")
       setAddress("")
-      router.replace("/(tabs)")
+      router.replace("/")
     } catch (error) {
       console.error("Error adding document: ", error)
       alert("Failed to create compound. Please try again.")
