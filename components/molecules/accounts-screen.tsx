@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { View, StyleSheet, ScrollView } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import MyText from "../atoms/my-text"
-import { ActivityIndicator, Card } from "react-native-paper"
+import { ActivityIndicator, Card, Button } from "react-native-paper"
 import MyColors from "../atoms/my-colors"
 import {
   collection,
@@ -11,62 +11,85 @@ import {
   getDocs,
   doc,
   getDoc,
+  updateDoc,
+  arrayRemove,
 } from "firebase/firestore"
 import { db } from "@/FirebaseConfig"
 import { useAuth } from "../auth/auth-context"
 
 export default function AccountsScreen() {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [compounds, setCompounds] = useState<
-    { id: string; name: string; members: { email: string }[] }[]
+    { id: string; name: string; members: { uid: string; email: string }[] }[]
   >([])
 
-  useEffect(() => {
+  const fetchCompoundsWithCaretakers = async () => {
     if (!user) return
 
-    const fetchCompoundsWithMembers = async () => {
-      setIsLoading(true)
-      try {
-        // Fetch compounds owned by the user
-        const compoundQuery = query(
-          collection(db, "compounds"),
-          where("userId", "==", user.uid)
-        )
-        const compoundSnapshot = await getDocs(compoundQuery)
+    setIsLoading(true)
+    try {
+      const compoundQuery = query(
+        collection(db, "compounds"),
+        where("userId", "==", user.uid)
+      )
+      const compoundSnapshot = await getDocs(compoundQuery)
 
-        const compoundData = await Promise.all(
-          compoundSnapshot.docs.map(async (compoundDoc) => {
-            const compoundId = compoundDoc.id
-            const compoundName =
-              compoundDoc.data().compoundName || "Unnamed Compound"
-            const membersUIDs: string[] = compoundDoc.data().members || []
+      const compoundData = await Promise.all(
+        compoundSnapshot.docs.map(async (compoundDoc) => {
+          const compoundId = compoundDoc.id
+          const compoundName =
+            compoundDoc.data().compoundName || "Unnamed Compound"
+          const membersUIDs: string[] = compoundDoc.data().members || []
 
-            // Fetch members' details
-            const members = await Promise.all(
+          const caretakers = (
+            await Promise.all(
               membersUIDs.map(async (uid) => {
                 const userRef = doc(db, "users", uid)
                 const userSnap = await getDoc(userRef)
-                return userSnap.exists()
-                  ? { email: userSnap.data().email || "Unknown Email" }
-                  : { email: "Unknown Email" }
+                const userData = userSnap.data()
+                if (
+                  userSnap.exists() &&
+                  userData &&
+                  userData.role === "caretaker"
+                ) {
+                  return { uid, email: userData.email || "Unknown Email" }
+                }
+                return null
               })
             )
+          ).filter(
+            (member): member is { uid: string; email: string } =>
+              member !== null
+          )
 
-            return { id: compoundId, name: compoundName, members }
-          })
-        )
+          return { id: compoundId, name: compoundName, members: caretakers }
+        })
+      )
 
-        setCompounds(compoundData)
-      } catch (error) {
-        console.error("Error fetching compounds and members:", error)
-      } finally {
-        setIsLoading(false)
-      }
+      setCompounds(compoundData)
+    } catch (error) {
+      console.error("Error fetching compounds and caretakers:", error)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    fetchCompoundsWithMembers()
+  useEffect(() => {
+    fetchCompoundsWithCaretakers()
   }, [user])
+
+  const removeMember = async (compoundId: string, memberUid: string) => {
+    try {
+      const compoundRef = doc(db, "compounds", compoundId)
+      await updateDoc(compoundRef, {
+        members: arrayRemove(memberUid),
+      })
+      fetchCompoundsWithCaretakers()
+    } catch (error) {
+      console.error("Error removing member:", error)
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
@@ -85,7 +108,7 @@ export default function AccountsScreen() {
               Accounts
             </MyText>
             <MyText textType="body" style={styles.subtitle}>
-              Manage your compounds and members.
+              View and manage your compound members.
             </MyText>
 
             {compounds.length > 0 ? (
@@ -97,13 +120,23 @@ export default function AccountsScreen() {
                     </MyText>
                     {compound.members.length > 0 ? (
                       compound.members.map((member, index) => (
-                        <MyText key={index} textType="body">
-                          {member.email}
-                        </MyText>
+                        <View key={index} style={styles.memberContainer}>
+                          <MyText textType="body">{member.email}</MyText>
+                          {role === "management" && (
+                            <Button
+                              mode="text"
+                              onPress={() =>
+                                removeMember(compound.id, member.uid)
+                              }
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </View>
                       ))
                     ) : (
                       <MyText textType="body" style={styles.noUsersText}>
-                        No members in this compound.
+                        No caretakers in this compound.
                       </MyText>
                     )}
                   </Card.Content>
@@ -169,5 +202,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
     color: MyColors.dark,
+  },
+  memberContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 5,
   },
 })

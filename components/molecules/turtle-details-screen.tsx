@@ -5,23 +5,33 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
+  Pressable,
 } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { Card, Switch, Text } from "react-native-paper"
+import { Text, Switch, IconButton } from "react-native-paper"
 import MyText from "@/components/atoms/my-text"
 import MyColors from "@/components/atoms/my-colors"
 import MyButton from "@/components/atoms/my-button"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { doc, getDoc, updateDoc } from "firebase/firestore"
-import { db } from "../../FirebaseConfig"
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore"
+import * as ImagePicker from "expo-image-picker"
+import { db, storage } from "../../FirebaseConfig"
 import MyInputForm from "../atoms/my-input-form"
 import { Picker } from "@react-native-picker/picker"
 import { deleteTurtle } from "@/services/turtles-services/deleteTurtles"
 import { useAuth } from "@/components/auth/auth-context"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 
 export default function TurtleDetailsScreen() {
   const { id } = useLocalSearchParams()
-  const { user, role } = useAuth()
+  const { role } = useAuth()
 
   const [turtle, setTurtle] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -69,24 +79,74 @@ export default function TurtleDetailsScreen() {
     setIsSaving(true)
     try {
       const docRef = doc(db, "turtles", id.toString())
-      await updateDoc(docRef, {
+      const updatedData = {
         length: parseFloat(length) || 0,
         weight: parseFloat(weight) || 0,
         location,
         status,
+      }
+
+      const changes: any = {}
+      Object.entries(updatedData).forEach(([key, newValue]) => {
+        if (turtle[key] !== newValue) {
+          changes[key] = {
+            from: turtle[key],
+            to: newValue,
+          }
+        }
       })
 
-      setTurtle((prev: any) => ({
-        ...prev,
-        length: parseFloat(length) || 0,
-        weight: parseFloat(weight) || 0,
-        location,
-        status,
-      }))
+      if (Object.keys(changes).length > 0) {
+        await updateDoc(docRef, updatedData)
+
+        const historyRef = collection(db, "turtles", id.toString(), "history")
+        await addDoc(historyRef, {
+          changes,
+          timestamp: serverTimestamp(),
+        })
+
+        setTurtle((prev: any) => ({
+          ...prev,
+          ...updatedData,
+        }))
+      }
     } catch (error) {
       console.error("Error updating turtle:", error)
     }
     setIsSaving(false)
+  }
+
+  const handleImageUpload = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      })
+
+      if (!result.canceled && result.assets.length > 0) {
+        const imageUri = result.assets[0].uri
+
+        const response = await fetch(imageUri)
+        const blob = await response.blob()
+
+        const imageRef = ref(storage, `turtle-images/${id}.jpg`)
+        await uploadBytes(imageRef, blob)
+
+        const downloadURL = await getDownloadURL(imageRef)
+
+        const docRef = doc(db, "turtles", id.toString())
+        await updateDoc(docRef, { imageUrl: downloadURL })
+
+        setTurtle((prev: any) => ({
+          ...prev,
+          imageUrl: downloadURL,
+        }))
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error)
+    }
   }
 
   if (isLoading) {
@@ -115,27 +175,50 @@ export default function TurtleDetailsScreen() {
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.switchContainer}>
-          <MyText textType="title" textColor={MyColors.black}>
-            Rescued Turtle #{id}
-          </MyText>
+        <MyText
+          textType="title"
+          textColor={MyColors.black}
+          style={{
+            textAlign: "center",
+            fontSize: 24,
+            marginVertical: 10,
+            paddingTop: 20,
+          }}
+        >
+          Rescued Turtle #{id}
+        </MyText>
+
+        <View style={styles.qrToggle}>
+          <Text style={styles.qrToggleLabel}>Show QR Code</Text>
+          <View style={styles.qrToggleRight}>
+            <IconButton
+              icon="history"
+              size={26}
+              onPress={() => {
+                router.push(`/history-nav?id=${id}`)
+              }}
+            />
+            <Switch value={showQR} onValueChange={() => setShowQR(!showQR)} />
+          </View>
         </View>
 
-        <View style={styles.switchContainer}>
-          <Text>View QR</Text>
-          <Switch value={showQR} onValueChange={() => setShowQR(!showQR)} />
+        <View style={styles.imageContainer}>
+          {showQR ? (
+            <Image
+              source={{
+                uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RT-${id}`,
+              }}
+              style={styles.qrImage}
+            />
+          ) : (
+            <Pressable onLongPress={handleImageUpload}>
+              <Image
+                source={{ uri: turtle.imageUrl }}
+                style={styles.turtleImage}
+              />
+            </Pressable>
+          )}
         </View>
-
-        {showQR ? (
-          <Image
-            source={{
-              uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RT-${id}`,
-            }}
-            style={{ width: 150, height: 150, alignSelf: "center" }}
-          />
-        ) : (
-          <Image source={{ uri: turtle.imageUrl }} style={styles.turtleImage} />
-        )}
 
         <View style={styles.inputs}>
           <MyText textType="bodyBold" textColor={MyColors.black}>
@@ -192,7 +275,13 @@ export default function TurtleDetailsScreen() {
         </View>
 
         <View
-          style={{ flexDirection: "row", justifyContent: "center", gap: 20 }}
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 20,
+            marginBottom: 30,
+            paddingBottom: 50,
+          }}
         >
           <MyButton
             style={styles.saveButton}
@@ -232,10 +321,9 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: MyColors.white,
-    marginTop: 50,
   },
   scrollContainer: {
-    flex: 1,
+    padding: 20,
   },
   container: {
     flex: 1,
@@ -243,40 +331,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: MyColors.white,
   },
-  switchContainer: {
+  qrToggle: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     alignItems: "center",
     marginVertical: 10,
+    padding: 10,
+    borderRadius: 10,
+  },
+  qrToggleLabel: {
+    fontSize: 16,
+    color: MyColors.black,
+    fontWeight: "500",
+  },
+  imageContainer: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  qrToggleRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 0,
   },
   turtleImage: {
-    alignSelf: "center",
-    width: "90%",
+    width: 280,
     height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
+    borderRadius: 12,
   },
-  saveButton: {
-    alignSelf: "center",
-    marginVertical: 10,
+  qrImage: {
+    width: 150,
+    height: 150,
   },
   inputs: {
     justifyContent: "center",
     gap: 20,
-    marginTop: 20,
-    marginBottom: 40,
+    marginVertical: 30,
     alignItems: "center",
   },
   dropdownContainer: {
     borderWidth: 1,
     borderColor: "gray",
-    borderRadius: 5,
+    borderRadius: 8,
     paddingHorizontal: 10,
     height: 50,
     justifyContent: "center",
+    width: 280,
   },
   picker: {
-    height: 60,
-    width: 280,
+    height: 50,
+    width: "100%",
+  },
+  saveButton: {
+    marginTop: 10,
   },
 })

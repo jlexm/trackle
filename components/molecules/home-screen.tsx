@@ -6,6 +6,7 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  Alert,
 } from "react-native"
 import MyColors from "../atoms/my-colors"
 import MyText from "../atoms/my-text"
@@ -27,6 +28,7 @@ import {
 import { useAuth } from "../auth/auth-context"
 import { db } from "@/FirebaseConfig"
 import { useGlobalContext } from "@/services/global-services/global-context"
+import * as Clipboard from "expo-clipboard"
 
 export default function HomeScreen() {
   const router = useRouter()
@@ -169,6 +171,16 @@ export default function HomeScreen() {
                 onPress={() => {
                   setCurrentCompoundID(compound.id)
                   router.push("/(tabs)")
+                }}
+                onLongPress={() => {
+                  if (role === "management") {
+                    Clipboard.setStringAsync(compound.id)
+                    Alert.alert(
+                      "Compound Code Copied!",
+                      `Code for ${compound.name} has been copied to your clipboard.`,
+                      [{ text: "OK" }]
+                    )
+                  }
                 }}
               >
                 <Card.Title title={compound.name} />

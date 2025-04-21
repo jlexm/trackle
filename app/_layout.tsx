@@ -58,6 +58,10 @@ export default function RootLayout() {
             name="create-compound-nav"
             options={{ title: "", headerTransparent: true }}
           />
+          <Stack.Screen
+            name="history-nav"
+            options={{ title: "", headerTransparent: true }}
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
       </GlobalProvider>

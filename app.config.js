@@ -7,7 +7,7 @@ export default {
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "myapp",
+    scheme: "trackleapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
@@ -32,6 +32,9 @@ export default {
       firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.FIREBASE_APP_ID,
+      eas: {
+        projectId: process.env.EAS_PROJECT_ID,
+      },
     },
     plugins: [
       "expo-router",
